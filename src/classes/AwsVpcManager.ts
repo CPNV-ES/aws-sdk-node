@@ -8,25 +8,25 @@ export class AwsVpcManager implements IVpcManager {
   private vpcs: EC2Client.Vpc[] = [];
 
   constructor(awsProfileName: string, awsRegionEndpoint: string) {
-    this.client = new EC2Client({region: awsRegionEndpoint})
-   }
+    this.client = new EC2Client({ region: awsRegionEndpoint })
+  }
 
   public async createVpc(vpcTagName: string, cidrBlock: string): Promise<void> {
     this.client.createVpc(
-      { 
+      {
         CidrBlock: cidrBlock,
         TagSpecifications: [
-          { 
-            ResourceType: "vpc", 
-            Tags: [{Key: "Name", Value: vpcTagName}] 
+          {
+            ResourceType: "vpc",
+            Tags: [{ Key: "Name", Value: vpcTagName }]
           }
         ]
-      }, 
+      },
       (err: AWSError, data: EC2Client.CreateVpcResult) => {
-        if(err) {
+        if (err) {
           throw new Error("Error during Vpc creation: \n" + err);
         }
-        else if(data.Vpc) {
+        else if (data.Vpc) {
           this.vpcs.push(data.Vpc);
         }
         else {
@@ -37,13 +37,15 @@ export class AwsVpcManager implements IVpcManager {
   }
 
   public async deleteVpc(vpcTagName: string): Promise<void> {
-    throw new Error("Method not implemented.");
+    const vpcId: string = await this.vpcId(vpcTagName);
+
+    await this.client.deleteVpc({ VpcId: vpcId }).promise();
   }
 
   public async exists(vpcTagName: string): Promise<boolean> {
-    const vpc: string = await this.vpcId(vpcTagName);
+    const vpcId: string = await this.vpcId(vpcTagName);
 
-    return !!vpc;
+    return !!vpcId;
   }
 
   /**
