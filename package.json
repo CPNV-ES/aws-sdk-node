@@ -26,6 +26,7 @@
     "typescript": "^4.2.4"
   },
   "dependencies": {
-    "aws-sdk": "^2.893.0"
+    "aws-sdk": "^2.893.0",
+    "dotenv": "^8.2.0"
   }
 }
