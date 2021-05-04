@@ -27,8 +27,6 @@ export class AwsVpcManager implements IVpcManager {
         console.log(err ?? data);
       }
     );
-
-    throw new Error("Method not implemented.");
   }
 
   public async deleteVpc(vpcTagName: string): Promise<void> {
