@@ -1,4 +1,3 @@
-import { AWSError } from "aws-sdk";
 import EC2Client from "aws-sdk/clients/ec2";
 import { IVpcManager } from "src/interfaces/IVpcManager";
 
@@ -9,31 +8,23 @@ export class AwsVpcManager implements IVpcManager {
 
   constructor(awsProfileName: string, awsRegionEndpoint: string) {
     this.client = new EC2Client({region: awsRegionEndpoint})
-   }
+  }
 
+  
   public async createVpc(vpcTagName: string, cidrBlock: string): Promise<void> {
-    this.client.createVpc(
-      { 
-        CidrBlock: cidrBlock,
-        TagSpecifications: [
-          { 
-            ResourceType: "vpc", 
-            Tags: [{Key: "Name", Value: vpcTagName}] 
-          }
-        ]
-      }, 
-      (err: AWSError, data: EC2Client.CreateVpcResult) => {
-        if(err) {
-          throw new Error("Error during Vpc creation: \n" + err);
+    if(this.exists(vpcTagName)) {
+      throw new Error(`There is already a Vpc with the tag Name ${vpcTagName}`);
+    }
+
+    await this.client.createVpc({ 
+      CidrBlock: cidrBlock,
+      TagSpecifications: [
+        { 
+          ResourceType: "vpc", 
+          Tags: [{Key: "Name", Value: vpcTagName}] 
         }
-        else if(data.Vpc) {
-          this.vpcs.push(data.Vpc);
-        }
-        else {
-          throw new Error("Vpc is undefined");
-        }
-      }
-    );
+      ]
+    }).promise();
   }
 
   public async deleteVpc(vpcTagName: string): Promise<void> {
