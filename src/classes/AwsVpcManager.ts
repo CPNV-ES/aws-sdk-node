@@ -23,8 +23,15 @@ export class AwsVpcManager implements IVpcManager {
         ]
       }, 
       (err: AWSError, data: EC2Client.CreateVpcResult) => {
-        // TODO: Handle error
-        console.log(err ?? data);
+        if(err) {
+          throw new Error("Error during Vpc creation: \n" + err);
+        }
+        else if(data.Vpc) {
+          this.vpcs.push(data.Vpc);
+        }
+        else {
+          throw new Error("Vpc is undefined");
+        }
       }
     );
   }
