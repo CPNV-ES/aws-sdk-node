@@ -46,4 +46,10 @@ describe("AwsVpcManager unit tests", () => {
   });
 });
 
-describe("AwsVpcManager integration tests", () => {});
+describe("AwsVpcManager integration tests", () => {
+  test("Scenari nominal case success", async () => {
+    await vpcManager.createVpc(vpcTagName, cidrBlock);
+
+    expect(await vpcManager.exists(vpcTagName)).toBeTruthy();
+  });
+});
