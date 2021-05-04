@@ -34,14 +34,42 @@ export class AwsVpcManager implements IVpcManager {
   }
 
   public async exists(vpcTagName: string): Promise<boolean> {
-    throw new Error("Method not implemented.");
+    const vpc: string = await this.vpcId(vpcTagName);
+
+    return !!vpc;
   }
 
+  /**
+   * TODO(alexandre): Handle describeVpcs pagination
+   *
+   * @private
+   * @return {*}  {Promise<void>}
+   * @memberof AwsVpcManager
+   */
   private async describeVpcs(): Promise<void> {
-    throw new Error("Method not implemented.");
+    const describeVpcs: EC2Client.DescribeVpcsResult = await this.client.describeVpcs().promise();
+    this.vpcs = describeVpcs.Vpcs ?? [];
   }
 
-  private async vpcId(vpcTageName: string): Promise<string> {
-    throw new Error("Method not implemented.");
+  private async vpcId(vpcTagName: string): Promise<string> {
+    const { Vpcs }: EC2Client.DescribeVpcsResult = await this.client.describeVpcs({
+      Filters: [
+        {
+
+          Name: "tag:Name",
+          Values: [vpcTagName],
+        }
+      ]
+    }).promise();
+
+    if (!Vpcs) {
+      throw new Error(`The Vpc with the tagName: ${vpcTagName} does not exist`);
+    }
+
+    if (!Vpcs[0].VpcId) {
+      throw new Error(`The Vpc with the tagName: ${vpcTagName} does not have a VpcId`);
+    }
+
+    return Vpcs[0].VpcId;
   }
 }
