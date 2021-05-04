@@ -1,14 +1,31 @@
-import { Vpc } from "aws-sdk/clients/ec2";
+import { AWSError } from "aws-sdk";
+import EC2Client from "aws-sdk/clients/ec2";
 import { IVpcManager } from "src/interfaces/IVpcManager";
 
 export class AwsVpcManager implements IVpcManager {
-  private client;
+  private client: EC2Client = new EC2Client({region: 'ap-southeast-2'});
 
-  private vpcs: Vpc[] = [];
+  private vpcs: EC2Client.Vpc[] = [];
 
-  constructor(awsProfileName: string, awsRegionEndpoint: string) {}
+  constructor(awsProfileName: string, awsRegionEndpoint: string) { }
 
   public async createVpc(vpcTagName: string, cidrBlock: string): Promise<void> {
+    this.client.createVpc(
+      { 
+        CidrBlock: cidrBlock,
+        TagSpecifications: [
+          { 
+            ResourceType: "vpc", 
+            Tags: [{Key: "Name", Value: vpcTagName}] 
+          }
+        ]
+      }, 
+      (err: AWSError, data: EC2Client.CreateVpcResult) => {
+        // TODO: Handle error
+        console.log(err ?? data);
+      }
+    );
+
     throw new Error("Method not implemented.");
   }
 

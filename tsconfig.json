@@ -9,6 +9,7 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "importHelpers": true,
+    "esModuleInterop": true,
     "types": [
       "node",
       "jest"
