@@ -1,7 +1,5 @@
 import { AwsVpcManager } from "./classes/AwsVpcManager";
-import * as dotenv from "dotenv";
+import { config } from "./config";
 
-dotenv.config();
-
-let aws = new AwsVpcManager("", "ap-southeast-2");
+const aws = new AwsVpcManager("", config.AWS_REGION);
 aws.createVpc("test-vpc-coucou", "10.0.0.0/16");
