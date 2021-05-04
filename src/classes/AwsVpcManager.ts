@@ -3,11 +3,13 @@ import EC2Client from "aws-sdk/clients/ec2";
 import { IVpcManager } from "src/interfaces/IVpcManager";
 
 export class AwsVpcManager implements IVpcManager {
-  private client: EC2Client = new EC2Client({region: 'ap-southeast-2'});
+  private client: EC2Client;
 
   private vpcs: EC2Client.Vpc[] = [];
 
-  constructor(awsProfileName: string, awsRegionEndpoint: string) { }
+  constructor(awsProfileName: string, awsRegionEndpoint: string) {
+    this.client = new EC2Client({region: awsRegionEndpoint})
+   }
 
   public async createVpc(vpcTagName: string, cidrBlock: string): Promise<void> {
     this.client.createVpc(
