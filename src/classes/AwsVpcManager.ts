@@ -10,33 +10,48 @@ export class AwsVpcManager implements IVpcManager {
     this.client = new EC2Client({ region: awsRegionEndpoint });
   }
 
-  
+
   public async createVpc(vpcTagName: string, cidrBlock: string): Promise<void> {
-    if(this.exists(vpcTagName)) {
+    const exists = await this.exists(vpcTagName);
+
+    if (exists) {
       throw new Error(`There is already a Vpc with the tag Name ${vpcTagName}`);
     }
 
-    await this.client.createVpc({ 
+    await this.client.createVpc({
       CidrBlock: cidrBlock,
       TagSpecifications: [
-        { 
-          ResourceType: "vpc", 
-          Tags: [{Key: "Name", Value: vpcTagName}] 
+        {
+          ResourceType: "vpc",
+          Tags: [{ Key: "Name", Value: vpcTagName }]
         }
       ]
     }).promise();
   }
 
   public async deleteVpc(vpcTagName: string): Promise<void> {
-    const vpcId: string = await this.vpcId(vpcTagName);
+    let vpcId: string;
+
+    try {
+      vpcId = await this.vpcId(vpcTagName);
+    } catch (e) {
+      console.error(e);
+
+      return;
+    }
 
     await this.client.deleteVpc({ VpcId: vpcId }).promise();
   }
 
   public async exists(vpcTagName: string): Promise<boolean> {
-    const vpcId: string = await this.vpcId(vpcTagName);
+    try {
+      await this.vpcId(vpcTagName);
+    } catch (e) {
+      // The Vpc doesn't exists
+      return false;
+    }
 
-    return !!vpcId;
+    return true;
   }
 
   /**
