@@ -1,9 +1,10 @@
 import { AwsVpcManager } from "./AwsVpcManager";
+import { config } from "../config";
 
-const profileName: string = "";
-const regionEndpint: string = "";
-const vpcTagName: string = "";
-const cidrBlock: string = "";
+const profileName = "";
+const regionEndpint = config.AWS_REGION;
+const vpcTagName = "VIR1NODE";
+const cidrBlock = "10.0.0.0/16";
 
 let vpcManager: AwsVpcManager;
 
