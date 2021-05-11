@@ -9,7 +9,7 @@
     "build": "tsc",
     "clean": "rm -rf dist build",
     "start": "node ./dist/main.js",
-    "docs": "typedoc --entryPoints src/main.ts"
+    "docs": "typedoc"
   },
   "author": "",
   "license": "MIT",
