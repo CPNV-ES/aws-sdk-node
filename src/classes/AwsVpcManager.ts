@@ -6,11 +6,24 @@ export class AwsVpcManager implements IVpcManager {
 
   private vpcs: EC2Client.Vpc[] = [];
 
+  /**
+   * @param {string} awsProfileName
+   * @param {string} awsRegionEndpoint e.g. ap-southeast-2
+   * @memberof AwsVpcManager
+   */
   constructor(awsProfileName: string, awsRegionEndpoint: string) {
     this.client = new EC2Client({ region: awsRegionEndpoint });
   }
 
-
+  /**
+   *
+   *
+   * @param {string} vpcTagName e.g. VIR1NODE
+   * @param {string} cidrBlock e.g. 10.0.0.0/16
+   * @throws if a VPC with the same vpcTagName already exists
+   * @return {Promise<void>}
+   * @memberof AwsVpcManager
+   */
   public async createVpc(vpcTagName: string, cidrBlock: string): Promise<void> {
     const exists = await this.exists(vpcTagName);
 
@@ -29,6 +42,11 @@ export class AwsVpcManager implements IVpcManager {
     }).promise();
   }
 
+  /**
+   * @param {string} vpcTagName e.g. VIR1NODE
+   * @return {Promise<void>}
+   * @memberof AwsVpcManager
+   */
   public async deleteVpc(vpcTagName: string): Promise<void> {
     let vpcId: string;
 
@@ -43,6 +61,11 @@ export class AwsVpcManager implements IVpcManager {
     await this.client.deleteVpc({ VpcId: vpcId }).promise();
   }
 
+  /**
+   * @param {string} vpcTagName e.g. VIR1NODE
+   * @return {Promise<boolean>}
+   * @memberof AwsVpcManager
+   */
   public async exists(vpcTagName: string): Promise<boolean> {
     try {
       await this.vpcId(vpcTagName);
@@ -55,10 +78,12 @@ export class AwsVpcManager implements IVpcManager {
   }
 
   /**
+   * Wrapper around describeVpcs
+   * 
    * TODO(alexandre): Handle describeVpcs pagination
    *
    * @private
-   * @return {*}  {Promise<void>}
+   * @return {Promise<void>}
    * @memberof AwsVpcManager
    */
   private async describeVpcs(): Promise<void> {
@@ -66,6 +91,15 @@ export class AwsVpcManager implements IVpcManager {
     this.vpcs = describeVpcs.Vpcs ?? [];
   }
 
+  /**
+   * Get a VPCId by the vpcTagName
+   *
+   * @private
+   * @param {string} vpcTagName e.g. VIR1NODE
+   * @return {Promise<string>}
+   * @throws if no Vpc with the specified vpcTagName was
+   * @memberof AwsVpcManager
+   */
   private async vpcId(vpcTagName: string): Promise<string> {
     const { Vpcs }: EC2Client.DescribeVpcsResult = await this.client.describeVpcs({
       Filters: [
