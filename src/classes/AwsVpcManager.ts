@@ -71,9 +71,9 @@ export class AwsVpcManager implements IVpcManager {
       await this.vpcId(vpcTagName);
     } catch (e) {
       // The Vpc doesn't exists
+      //TODO you should (according to the test, throw an exception "VPC Already exists"
       return false;
     }
-
     return true;
   }
 
@@ -104,7 +104,7 @@ export class AwsVpcManager implements IVpcManager {
     const { Vpcs }: EC2Client.DescribeVpcsResult = await this.client.describeVpcs({
       Filters: [
         {
-
+          //remove this empty line
           Name: "tag:Name",
           Values: [vpcTagName],
         }
@@ -113,10 +113,12 @@ export class AwsVpcManager implements IVpcManager {
 
     if (!Vpcs) {
       throw new Error(`The Vpc with the tagName: ${vpcTagName} does not exist`);
+      //TODO You have to throw an exception of the correct type -> please read the test class in backlog
     }
 
     if (!Vpcs[0].VpcId) {
       throw new Error(`The Vpc with the tagName: ${vpcTagName} does not have a VpcId`);
+      //TODO You have to throw an exception of the correct type -> please read the test class in backlog
     }
 
     return Vpcs[0].VpcId;

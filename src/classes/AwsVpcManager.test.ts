@@ -1,8 +1,9 @@
 import { AwsVpcManager } from "./AwsVpcManager";
 import { config } from "../config";
 
-const profileName = "";
-const regionEndpint = config.AWS_REGION;
+//TODO In the module, I ask you to develop following POO principles.
+const profileName = "";//TODO review either this const or constructor's logic
+const regionEndpint = config.AWS_REGION;//TODO typo
 const vpcTagName = "VIR1NODE";
 const cidrBlock = "10.0.0.0/16";
 
@@ -11,7 +12,7 @@ let vpcManager: AwsVpcManager;
 beforeEach(() => {
   vpcManager = new AwsVpcManager(profileName, regionEndpint);
 
-  jest.setTimeout(10000);
+  jest.setTimeout(10000);//TODO Please do not use timeout in test class (and never...)
 });
 
 afterEach(async () => {
