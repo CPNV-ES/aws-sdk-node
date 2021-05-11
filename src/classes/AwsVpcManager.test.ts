@@ -9,6 +9,8 @@ let vpcManager: AwsVpcManager;
 
 beforeEach(() => {
   vpcManager = new AwsVpcManager(regionEndpoint);
+
+  jest.setTimeout(10000);
 });
 
 afterEach(async () => {
