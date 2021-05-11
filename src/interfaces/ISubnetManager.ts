@@ -1,6 +1,6 @@
 export interface ISubnetManager {
 
-    createSubnet(subnetTagName: string, cidrBlock: string): Promise<void>;
+    createSubnet(subnetTagName: string, vpcId: string, cidrBlock: string): Promise<void>;
 
     deleteSubnet(subnetTagName: string): Promise<void>;
 
