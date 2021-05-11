@@ -12,7 +12,7 @@ let vpcManager: AwsVpcManager;
 beforeEach(() => {
   vpcManager = new AwsVpcManager(profileName, regionEndpint);
 
-  jest.setTimeout(10000);//TODO Please do not use timeout in test class (and never...)
+  jest.setTimeout(10000);//TODO NGY Please do not use timeout in test class (and never...)
 });
 
 afterEach(async () => {

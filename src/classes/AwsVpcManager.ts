@@ -104,7 +104,7 @@ export class AwsVpcManager implements IVpcManager {
     const { Vpcs }: EC2Client.DescribeVpcsResult = await this.client.describeVpcs({
       Filters: [
         {
-          //remove this empty line
+          //TODO remove this empty line
           Name: "tag:Name",
           Values: [vpcTagName],
         }
