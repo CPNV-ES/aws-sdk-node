@@ -4,20 +4,15 @@ import { IVpcManager } from "src/interfaces/IVpcManager";
 export class AwsVpcManager implements IVpcManager {
   private client: EC2Client;
 
-  private vpcs: EC2Client.Vpc[] = [];
-
   /**
-   * @param {string} awsProfileName
    * @param {string} awsRegionEndpoint e.g. ap-southeast-2
    * @memberof AwsVpcManager
    */
-  constructor(awsProfileName: string, awsRegionEndpoint: string) {
+  constructor(awsRegionEndpoint: string) {
     this.client = new EC2Client({ region: awsRegionEndpoint });
   }
 
   /**
-   *
-   *
    * @param {string} vpcTagName e.g. VIR1NODE
    * @param {string} cidrBlock e.g. 10.0.0.0/16
    * @throws if a VPC with the same vpcTagName already exists
@@ -28,7 +23,7 @@ export class AwsVpcManager implements IVpcManager {
     const exists = await this.exists(vpcTagName);
 
     if (exists) {
-      throw new Error(`There is already a Vpc with the tag Name ${vpcTagName}`);
+      throw new VpcNameAlreadyExistsError(vpcTagName);
     }
 
     await this.client.createVpc({
@@ -48,17 +43,11 @@ export class AwsVpcManager implements IVpcManager {
    * @memberof AwsVpcManager
    */
   public async deleteVpc(vpcTagName: string): Promise<void> {
-    let vpcId: string;
+    const vpcId = await this.vpcId(vpcTagName);
 
-    try {
-      vpcId = await this.vpcId(vpcTagName);
-    } catch (e) {
-      console.error(e);
-
-      return;
+    if (vpcId) {
+      await this.client.deleteVpc({ VpcId: vpcId }).promise();
     }
-
-    await this.client.deleteVpc({ VpcId: vpcId }).promise();
   }
 
   /**
@@ -67,28 +56,9 @@ export class AwsVpcManager implements IVpcManager {
    * @memberof AwsVpcManager
    */
   public async exists(vpcTagName: string): Promise<boolean> {
-    try {
-      await this.vpcId(vpcTagName);
-    } catch (e) {
-      // The Vpc doesn't exists
-      //TODO you should (according to the test, throw an exception "VPC Already exists"
-      return false;
-    }
-    return true;
-  }
+    const vpcId = await this.vpcId(vpcTagName);
 
-  /**
-   * Wrapper around describeVpcs
-   * 
-   * TODO(alexandre): Handle describeVpcs pagination
-   *
-   * @private
-   * @return {Promise<void>}
-   * @memberof AwsVpcManager
-   */
-  private async describeVpcs(): Promise<void> {
-    const describeVpcs: EC2Client.DescribeVpcsResult = await this.client.describeVpcs().promise();
-    this.vpcs = describeVpcs.Vpcs ?? [];
+    return !!vpcId;
   }
 
   /**
@@ -96,31 +66,29 @@ export class AwsVpcManager implements IVpcManager {
    *
    * @private
    * @param {string} vpcTagName e.g. VIR1NODE
-   * @return {Promise<string>}
-   * @throws if no Vpc with the specified vpcTagName was
+   * @return {Promise<string | null>}
    * @memberof AwsVpcManager
    */
-  private async vpcId(vpcTagName: string): Promise<string> {
+  private async vpcId(vpcTagName: string): Promise<string | null> {
     const { Vpcs }: EC2Client.DescribeVpcsResult = await this.client.describeVpcs({
       Filters: [
         {
-          //remove this empty line
           Name: "tag:Name",
           Values: [vpcTagName],
         }
       ]
     }).promise();
 
-    if (!Vpcs) {
-      throw new Error(`The Vpc with the tagName: ${vpcTagName} does not exist`);
-      //TODO You have to throw an exception of the correct type -> please read the test class in backlog
-    }
-
-    if (!Vpcs[0].VpcId) {
-      throw new Error(`The Vpc with the tagName: ${vpcTagName} does not have a VpcId`);
-      //TODO You have to throw an exception of the correct type -> please read the test class in backlog
+    if (!Vpcs || !Vpcs[0].VpcId) {
+      return null;
     }
 
     return Vpcs[0].VpcId;
+  }
+}
+
+export class VpcNameAlreadyExistsError extends Error {
+  constructor(vpcTagName: string) {
+    super(`The Vpc with the tagName: ${vpcTagName} already exists`);
   }
 }
