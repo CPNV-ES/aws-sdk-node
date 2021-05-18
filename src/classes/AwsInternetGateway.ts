@@ -1,6 +1,7 @@
 import EC2Client from "aws-sdk/clients/ec2";
 import { IInternetGateway } from "src/interfaces/IInternetGateway";
 import { AwsVpcManager } from "./AwsVpcManager";
+import { config } from "../config";
 
 export class AwsInternetGateway implements IInternetGateway {
     private client: EC2Client;
@@ -40,24 +41,21 @@ export class AwsInternetGateway implements IInternetGateway {
         await this.client.deleteInternetGateway({ InternetGatewayId: InternetGatewayId }).promise();
     }
 
-    public async attachInternetGateway(igwTagName: string): Promise<void> {
+    public async attachInternetGateway(igwTagName: string, vpcTagName: string): Promise<void> {
         let InternetGatewayId: string;
         let vpcId: string;
 
+        const aws = new AwsVpcManager("", config.AWS_REGION);
 
         try {
             InternetGatewayId = await this.igwId(igwTagName);
-            vpcId = await this.vpcId(vpcTagName);
-
-
-
+            vpcId = await aws.vpcId(vpcTagName);
         } catch (e) {
             console.error(e);
 
             return;
         }
-
-        await this.client.attachInternetGateway({ InternetGatewayId: InternetGatewayId }).promise();
+        await this.client.attachInternetGateway({InternetGatewayId: InternetGatewayId, VpcId: vpcId})
     }
 
     public async existInternetGateway(igwTagName: string): Promise<boolean> {
