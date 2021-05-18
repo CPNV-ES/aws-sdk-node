@@ -25,8 +25,6 @@ beforeAll(async () => {
 beforeEach(() => {
   const vpcManager = new AwsVpcManager("", regionEndpint);
   subnetManager = new AwsSubnetManager(regionEndpint, vpcManager);
-
-  jest.setTimeout(15000);
 });
 
 afterEach(async () => {
