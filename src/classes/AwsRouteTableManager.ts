@@ -30,7 +30,7 @@ export class AwsRouteTableManager implements IRouteTableManager {
         const exists = await this.exists(routeTableTagName);
 
         if (exists) {
-          throw new Error(`There is already a RouteTable with the tag Name ${routeTableTagName}`);
+          throw new RouteTableNameAlreadyExistsError(routeTableTagName);
         }
 
         const vpcId = await this.vpcManager.vpcId(vpcTagName);   // TODO : get vpcid from vpctagname
@@ -45,18 +45,11 @@ export class AwsRouteTableManager implements IRouteTableManager {
     }
 
     public async deleteRouteTable(routeTableTagName: string): Promise<void> {
-        let routeTable: EC2Client.RouteTable;
-
-        try {
-            routeTable = await this.getRouteTable(routeTableTagName);
-        } catch (e) {
-            console.error(e);
-            return;
-        }
+        const routeTable = await this.getRouteTable(routeTableTagName);
 
         // We can't delete a RouteTable if it is a Main RouteTable
         if(routeTable.Associations && routeTable.Associations.find(ass => ass.Main)) {
-            throw new Error(`Cannot delete the RouteTable with TagName ${routeTableTagName}: it is a Main RouteTable`);
+            throw new CannotDeleteMainRouteTableError(routeTableTagName);
         }
 
         await this.dissociateFromAllSubnets(routeTableTagName);
@@ -117,11 +110,10 @@ export class AwsRouteTableManager implements IRouteTableManager {
      * @memberof AwsRouteTableManager
      */
     public async exists(routeTableTagName: string): Promise<boolean> {
-        try {
-            await this.routeTableId(routeTableTagName);
-        } catch (e) {
-            return false;
-        }
+        const routeTableId = await this.routeTableId(routeTableTagName);
+
+        return !!routeTableId;
+    }
 
         return true;
     }
@@ -134,11 +126,7 @@ export class AwsRouteTableManager implements IRouteTableManager {
             }]
         }).promise();
 
-        if (!RouteTables) {
-            throw new Error(`The RouteTable with the tagName: ${routeTableTagName} does not exist`);
-        }
-
-        return RouteTables[0];
+        return RouteTables![0];
     }
 
     /**
@@ -149,13 +137,24 @@ export class AwsRouteTableManager implements IRouteTableManager {
      * @throws if no RouteTable with the specified routeTableTagName was found
      * @memberof AwsRouteTableManager
      */
-    private async routeTableId(routeTableTagName: string): Promise<string> {
+    private async routeTableId(routeTableTagName: string): Promise<string | null> {
         const routeTable : EC2Client.RouteTable = await this.getRouteTable(routeTableTagName);
 
-        if (!routeTable.RouteTableId) {
-            throw new Error(`The Vpc with the tagName: ${routeTableTagName} does not have a RouteTableId`);
+        if(!routeTable || !routeTable.RouteTableId){
+            return null;
         }
 
         return routeTable.RouteTableId;
+    }
+}
+
+export class RouteTableNameAlreadyExistsError extends Error {
+    constructor(routeTableTagName: string) {
+        super(`The RouteTable with the tagName: ${routeTableTagName} already exists`);
+    }
+}
+export class CannotDeleteMainRouteTableError extends Error {
+    constructor(routeTableTagName: string) {
+        super(`Cannot delete the RouteTable with the tagName: ${routeTableTagName} because it is the main RouteTable of a Vpc`);
     }
 }
