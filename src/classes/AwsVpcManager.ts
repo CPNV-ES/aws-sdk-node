@@ -31,15 +31,17 @@ export class AwsVpcManager implements IVpcManager {
       throw new Error(`There is already a Vpc with the tag Name ${vpcTagName}`);
     }
 
-    await this.client.createVpc({
-      CidrBlock: cidrBlock,
-      TagSpecifications: [
-        {
-          ResourceType: "vpc",
-          Tags: [{ Key: "Name", Value: vpcTagName }]
-        }
-      ]
-    }).promise();
+    await this.client
+      .createVpc({
+        CidrBlock: cidrBlock,
+        TagSpecifications: [
+          {
+            ResourceType: "vpc",
+            Tags: [{ Key: "Name", Value: vpcTagName }],
+          },
+        ],
+      })
+      .promise();
   }
 
   /**
@@ -79,7 +81,7 @@ export class AwsVpcManager implements IVpcManager {
 
   /**
    * Wrapper around describeVpcs
-   * 
+   *
    * TODO(alexandre): Handle describeVpcs pagination
    *
    * @private
@@ -87,7 +89,9 @@ export class AwsVpcManager implements IVpcManager {
    * @memberof AwsVpcManager
    */
   private async describeVpcs(): Promise<void> {
-    const describeVpcs: EC2Client.DescribeVpcsResult = await this.client.describeVpcs().promise();
+    const describeVpcs: EC2Client.DescribeVpcsResult = await this.client
+      .describeVpcs()
+      .promise();
     this.vpcs = describeVpcs.Vpcs ?? [];
   }
 
@@ -100,23 +104,26 @@ export class AwsVpcManager implements IVpcManager {
    * @throws if no Vpc with the specified vpcTagName was
    * @memberof AwsVpcManager
    */
-  private async vpcId(vpcTagName: string): Promise<string> {
-    const { Vpcs }: EC2Client.DescribeVpcsResult = await this.client.describeVpcs({
-      Filters: [
-        {
-
-          Name: "tag:Name",
-          Values: [vpcTagName],
-        }
-      ]
-    }).promise();
+  public async vpcId(vpcTagName: string): Promise<string> {
+    const { Vpcs }: EC2Client.DescribeVpcsResult = await this.client
+      .describeVpcs({
+        Filters: [
+          {
+            Name: "tag:Name",
+            Values: [vpcTagName],
+          },
+        ],
+      })
+      .promise();
 
     if (!Vpcs) {
       throw new Error(`The Vpc with the tagName: ${vpcTagName} does not exist`);
     }
 
     if (!Vpcs[0].VpcId) {
-      throw new Error(`The Vpc with the tagName: ${vpcTagName} does not have a VpcId`);
+      throw new Error(
+        `The Vpc with the tagName: ${vpcTagName} does not have a VpcId`
+      );
     }
 
     return Vpcs[0].VpcId;
