@@ -100,7 +100,7 @@ export class AwsVpcManager implements IVpcManager {
    * @throws if no Vpc with the specified vpcTagName was
    * @memberof AwsVpcManager
    */
-  private async vpcId(vpcTagName: string): Promise<string> {
+  public async vpcId(vpcTagName: string): Promise<string> {
     const { Vpcs }: EC2Client.DescribeVpcsResult = await this.client.describeVpcs({
       Filters: [
         {
