@@ -7,7 +7,15 @@ const cidrBlock = "10.0.0.0/16";
 
 let vpcManager: AwsVpcManager;
 
-beforeEach(() => {
+beforeAll(async () => {
+  // This ensures that we start the tests without any pre-existing VPC.
+  // The tests would fail if we did not perform this action.
+  if (await vpcManager.exists(vpcTagName)) {
+    await vpcManager.deleteVpc(vpcTagName);
+  }
+});
+
+beforeEach(async () => {
   vpcManager = new AwsVpcManager(regionEndpoint);
 
   jest.setTimeout(10000);
