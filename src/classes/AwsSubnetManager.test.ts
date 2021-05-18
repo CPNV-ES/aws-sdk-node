@@ -22,6 +22,14 @@ beforeAll(async () => {
   }
 });
 
+afterAll(async () => {
+  const vpcManager = new AwsVpcManager("", regionEndpint);
+
+  if (await vpcManager.exists(vpcTagname)) {
+    await vpcManager.deleteVpc(vpcTagname);
+  }
+});
+
 beforeEach(() => {
   const vpcManager = new AwsVpcManager("", regionEndpint);
   subnetManager = new AwsSubnetManager(regionEndpint, vpcManager);
