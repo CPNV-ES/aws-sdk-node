@@ -118,9 +118,6 @@ export class AwsRouteTableManager implements IRouteTableManager {
         return !!routeTableId;
     }
 
-        return true;
-    }
-
     private async getRouteTable(routeTableTagName: string) : Promise<EC2Client.RouteTable> {
         const { RouteTables }: EC2Client.DescribeRouteTablesResult = await this.client.describeRouteTables({
             Filters: [{
