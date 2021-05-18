@@ -140,7 +140,7 @@ export class AwsRouteTableManager implements IRouteTableManager {
      * @throws if no RouteTable with the specified routeTableTagName was found
      * @memberof AwsRouteTableManager
      */
-    private async routeTableId(routeTableTagName: string): Promise<string | null> {
+    public async routeTableId(routeTableTagName: string): Promise<string | null> {
         const routeTable : EC2Client.RouteTable = await this.getRouteTable(routeTableTagName);
 
         if(!routeTable || !routeTable.RouteTableId){
