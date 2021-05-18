@@ -1,7 +1,6 @@
 import { IRouteTableManager } from "src/interfaces/IRouteTableManager";
 import EC2Client from "aws-sdk/clients/ec2";
-import { throws } from "node:assert";
-import { AwsVpcManager } from "./AwsVpcManager";
+import { AwsVpcManager, VpcDoesNotExistError } from "./AwsVpcManager";
 
 export class AwsRouteTableManager implements IRouteTableManager {
     private client: EC2Client;
@@ -33,7 +32,11 @@ export class AwsRouteTableManager implements IRouteTableManager {
           throw new RouteTableNameAlreadyExistsError(routeTableTagName);
         }
 
-        const vpcId = await this.vpcManager.vpcId(vpcTagName);   // TODO : get vpcid from vpctagname
+        if(!this.vpcManager.exists(vpcTagName)) {
+            throw new VpcDoesNotExistError(vpcTagName);
+        }
+
+        const vpcId = await this.vpcManager.vpcId(vpcTagName); 
 
         await this.client.createRouteTable({
             VpcId: vpcId,

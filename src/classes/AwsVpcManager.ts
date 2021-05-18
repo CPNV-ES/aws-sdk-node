@@ -122,3 +122,8 @@ export class AwsVpcManager implements IVpcManager {
     return Vpcs[0].VpcId;
   }
 }
+export class VpcDoesNotExistError extends Error {
+  constructor(vpcTagName: string) {
+    super(`The Vpc with the tagName: ${vpcTagName} does not exists`);
+  }
+}
