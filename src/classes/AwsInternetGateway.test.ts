@@ -20,32 +20,26 @@ afterEach(async () => {
     }
 });
 
-describe("internetGateway unit tests", () => {
-    test("Create Internet Gateway nominal case success", async () => {
+describe("InternetGateway unit tests", () => {
+    test("Create Internet Gateway and verify if it exists", async () => {
         await internetGateway.createInternetGateway(igwTagName);
 
         expect(await internetGateway.existInternetGateway(igwTagName)).toBeTruthy();
     });
 
-    test("Create internet gatewy already existInternetGateway throws exception", async () => {
+    test("Create two IGWs and throws an exception when the second one is created", async () => {
         await internetGateway.createInternetGateway(igwTagName);
 
         // as described here : https://stackoverflow.com/a/47887098/10596952
         await expect(internetGateway.createInternetGateway(igwTagName)).rejects.toThrow();
     });
 
-    test("Delete VPC nominal case success", async () => {
+    test("Delete the IGW", async () => {
         await internetGateway.createInternetGateway(igwTagName);
 
         await internetGateway.deleteInternetGateway(igwTagName);
 
         expect(await internetGateway.existInternetGateway(igwTagName)).toBeFalsy();
-    });
-
-    test("VPC existInternetGateway nominal case success", async () => {
-        await internetGateway.createInternetGateway(igwTagName);
-
-        expect(await internetGateway.existInternetGateway(igwTagName)).toBeTruthy();
     });
 });
 
