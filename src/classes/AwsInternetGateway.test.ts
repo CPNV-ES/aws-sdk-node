@@ -1,4 +1,4 @@
-import { AwsInternetGateway } from "./AwsIgw";
+import { AwsInternetGateway } from "./AwsInternetGateway";
 import { config } from "../config";
 
 const regionEndpint = config.AWS_REGION;
