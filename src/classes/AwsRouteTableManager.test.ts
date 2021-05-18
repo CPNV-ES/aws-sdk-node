@@ -24,6 +24,7 @@ afterEach(async () => {
   if (await routeTableManager.exists(routeTableTagName)) {
     await routeTableManager.deleteRouteTable(routeTableTagName);
   }
+  
   if (await vpcManager.exists(vpcTagName)) {
     await vpcManager.deleteVpc(vpcTagName);
   }
@@ -31,6 +32,27 @@ afterEach(async () => {
 
 describe("AwsRouteTable unit tests", () => {
   test("Create RouteTable nominal case success", async () => {
+    await routeTableManager.createRouteTable(routeTableTagName, vpcTagName);
+
+    expect(await routeTableManager.exists(routeTableTagName)).toBeTruthy();
+  });
+
+  test("Create RouteTable already exists throws exception", async () => {
+    await routeTableManager.createRouteTable(routeTableTagName, vpcTagName);
+
+    // as described here : https://stackoverflow.com/a/47887098/10596952
+    await expect(routeTableManager.createRouteTable(routeTableTagName, vpcTagName)).rejects.toThrow();
+  });
+
+  test("Delete RouteTable nominal case success", async () => {
+    await routeTableManager.createRouteTable(routeTableTagName, vpcTagName);
+
+    await routeTableManager.deleteRouteTable(routeTableTagName);
+
+    expect(await routeTableManager.exists(routeTableTagName)).toBeFalsy();
+  });
+
+  test("RouteTable Exists nominal case success", async () => {
     await routeTableManager.createRouteTable(routeTableTagName, vpcTagName);
 
     expect(await routeTableManager.exists(routeTableTagName)).toBeTruthy();
