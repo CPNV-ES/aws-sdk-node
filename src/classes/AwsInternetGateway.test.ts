@@ -1,7 +1,6 @@
 import { AwsInternetGateway } from "./AwsIgw";
 import { config } from "../config";
 
-const profileName = "";
 const regionEndpint = config.AWS_REGION;
 const igwTagName = "VIR1NODE";
 //const cidrBlock = "10.0.0.0/16";
@@ -9,7 +8,7 @@ const igwTagName = "VIR1NODE";
 let internetGateway: AwsInternetGateway;
 
 beforeEach(() => {
-    internetGateway = new AwsInternetGateway(profileName, regionEndpint);
+    internetGateway = new AwsInternetGateway(regionEndpint);
 
     jest.setTimeout(10000);
 });

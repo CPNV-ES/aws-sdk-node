@@ -4,10 +4,9 @@ import { IInternetGateway } from "src/interfaces/IInternetGateway";
 export class AwsInternetGateway implements IInternetGateway {
     private client: EC2Client;
 
-    constructor(awsProfileName: string, awsRegionEndpoint: string) {
+    constructor(awsRegionEndpoint: string) {
         this.client = new EC2Client({ region: awsRegionEndpoint });
     }
-
 
     public async createInternetGateway(igwTagName: string): Promise<void> {
         const exists = await this.existInternetGateway(igwTagName);
