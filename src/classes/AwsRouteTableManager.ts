@@ -26,7 +26,7 @@ export class AwsRouteTableManager implements IRouteTableManager {
      * @throws when a RouteName with the same tagName already exists
      * @memberof AwsRouteTableManager
      */
-    public async createRouteTable(routeTableTagName: string, vpcTagName: string): Promise<string> {
+    public async createRouteTable(routeTableTagName: string, vpcTagName: string): Promise<void> {
         const exists = await this.exists(routeTableTagName);
 
         if (exists) {
@@ -35,19 +35,13 @@ export class AwsRouteTableManager implements IRouteTableManager {
 
         const vpcId = await this.vpcManager.vpcId(vpcTagName);   // TODO : get vpcid from vpctagname
 
-        const { RouteTable } : EC2Client.CreateRouteTableResult = await this.client.createRouteTable({
+        await this.client.createRouteTable({
             VpcId: vpcId,
             TagSpecifications: [{
                 ResourceType: "route-table",
                 Tags: [{ Key: "Name", "Value": routeTableTagName }]
             }],
         }).promise();
-
-        if(!RouteTable || !RouteTable.RouteTableId) {
-            throw new Error("Error when creating the RouteTable");
-        }
-
-        return RouteTable.RouteTableId;
     }
 
     public async deleteRouteTable(routeTableTagName: string): Promise<void> {
@@ -70,16 +64,14 @@ export class AwsRouteTableManager implements IRouteTableManager {
         await this.client.deleteRouteTable({ RouteTableId: routeTable.RouteTableId! }).promise();
     }
 
-    public async associateWithSubnet(routeTableTagName: string, subnetTagName: string): Promise<string> {
+    public async associateWithSubnet(routeTableTagName: string, subnetTagName: string): Promise<void> {
         const routeTableId = "";    // TODO: get routetable id from tagname
         const subnetId = "";    // TODO: get subnet id from tagname
         
-        const { AssociationId } : EC2Client.AssociateRouteTableResult = await this.client.associateRouteTable({
+        await this.client.associateRouteTable({
             RouteTableId: routeTableId,
             SubnetId: subnetId
         }).promise();
-
-        return AssociationId!;
     }
 
     /**
