@@ -26,15 +26,17 @@ export class AwsVpcManager implements IVpcManager {
       throw new VpcNameAlreadyExistsError(vpcTagName);
     }
 
-    await this.client.createVpc({
-      CidrBlock: cidrBlock,
-      TagSpecifications: [
-        {
-          ResourceType: "vpc",
-          Tags: [{ Key: "Name", Value: vpcTagName }]
-        }
-      ]
-    }).promise();
+    await this.client
+      .createVpc({
+        CidrBlock: cidrBlock,
+        TagSpecifications: [
+          {
+            ResourceType: "vpc",
+            Tags: [{ Key: "Name", Value: vpcTagName }],
+          },
+        ],
+      })
+      .promise();
   }
 
   /**
