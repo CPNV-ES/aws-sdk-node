@@ -70,16 +70,18 @@ export class AwsVpcManager implements IVpcManager {
    * @memberof AwsVpcManager
    */
   private async vpcId(vpcTagName: string): Promise<string | null> {
-    const { Vpcs }: EC2Client.DescribeVpcsResult = await this.client.describeVpcs({
-      Filters: [
-        {
-          Name: "tag:Name",
-          Values: [vpcTagName],
-        }
-      ]
-    }).promise();
+    const { Vpcs }: EC2Client.DescribeVpcsResult = await this.client
+      .describeVpcs({
+        Filters: [
+          {
+            Name: "tag:Name",
+            Values: [vpcTagName],
+          },
+        ],
+      })
+      .promise();
 
-    if (!Vpcs || !Vpcs[0].VpcId) {
+    if (!Vpcs || !Vpcs[0] || !Vpcs[0].VpcId) {
       return null;
     }
 
