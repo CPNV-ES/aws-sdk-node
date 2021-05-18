@@ -42,10 +42,16 @@ describe("InternetGateway unit tests", () => {
     });
 });
 
-describe("AwsinternetGateway integration tests", () => {
-    test("Scenari nominal case success", async () => {
-        await internetGateway.createInternetGateway(igwTagName);
+describe("InternetGateWay integration tests", () => {
+    test("Attach a VPC to an IGW", async () => {
+        await internetGateway.attach(myVPC);
 
-        expect(await internetGateway.existInternetGateway(igwTagName)).toBeTruthy();
+        expect(await internetGateway.has(myVPC)).toBeTruthy();
+    });
+
+    test("Detach a VPC to an IGW", async () => {
+        await internetGateway.detach(myVPC);
+
+        expect(await internetGateway.has(myVPC)).toBeFalsy();
     });
 });
