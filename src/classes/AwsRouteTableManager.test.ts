@@ -11,9 +11,17 @@ const cidrBlock = "10.0.0.0/16";
 let vpcManager: AwsVpcManager;
 let routeTableManager: AwsRouteTableManager;
 
-beforeEach(async () => {
+beforeAll(async () => {
   vpcManager = new AwsVpcManager(profileName, regionEndpint);
   routeTableManager = new AwsRouteTableManager(profileName, regionEndpint, vpcManager);
+
+  if (await routeTableManager.exists(routeTableTagName)) {
+    await routeTableManager.deleteRouteTable(routeTableTagName);
+  }
+  
+  if (await vpcManager.exists(vpcTagName)) {
+    await vpcManager.deleteVpc(vpcTagName);
+  }
 
   await vpcManager.createVpc(vpcTagName, cidrBlock);
 
@@ -21,6 +29,12 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  if (await routeTableManager.exists(routeTableTagName)) {
+    await routeTableManager.deleteRouteTable(routeTableTagName);
+  }
+});
+
+afterAll(async () => {
   if (await routeTableManager.exists(routeTableTagName)) {
     await routeTableManager.deleteRouteTable(routeTableTagName);
   }
