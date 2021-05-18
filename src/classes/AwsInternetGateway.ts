@@ -26,17 +26,17 @@ export class AwsInternetGateway implements IInternetGateway {
     }
 
     public async deleteInternetGateway(igwTagName: string): Promise<void> {
-        let igwId: string;
+        let InternetGatewayId: string;
 
         try {
-            igwId = await this.igwId(igwTagName);
+            InternetGatewayId = await this.igwId(igwTagName);
         } catch (e) {
             console.error(e);
 
             return;
         }
 
-        await this.client.deleteInternetGateway().promise();
+        await this.client.deleteInternetGateway({ InternetGatewayId: InternetGatewayId }).promise();
     }
 
     public async existInternetGateway(igwTagName: string): Promise<boolean> {

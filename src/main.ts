@@ -2,5 +2,5 @@
 import { AwsInternetGateway } from "./classes/AwsInternetGateway";
 import { config } from "./config";
 
-const aws = new AwsInternetGateway("", config.AWS_REGION);
+const aws = new AwsInternetGateway(config.AWS_REGION);
 aws.createInternetGateway("test");
