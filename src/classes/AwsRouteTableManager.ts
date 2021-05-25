@@ -120,7 +120,7 @@ export class AwsRouteTableManager implements IRouteTableManager {
         const routeTable = await this.getRouteTable(routeTableTagName);
 
         if(!routeTable)
-            throw new RouteTableNameAlreadyExistsError(routeTableTagName);
+            throw new RouteTableDoesNotExistError(routeTableTagName);
 
         await this.client.deleteRoute({
             RouteTableId: routeTable.RouteTableId!,
