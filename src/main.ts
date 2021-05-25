@@ -1,5 +1,6 @@
-import { AwsVpcManager } from "./classes/AwsVpcManager";
+//import { AwsVpcManager } from "./classes/AwsVpcManager";
+import { AwsInternetGateway } from "./classes/AwsInternetGateway";
 import { config } from "./config";
 
-const aws = new AwsVpcManager("", config.AWS_REGION);
-aws.createVpc("test-vpc-coucou", "10.0.0.0/16");
+const aws = new AwsInternetGateway(config.AWS_REGION);
+aws.createInternetGateway("test");
