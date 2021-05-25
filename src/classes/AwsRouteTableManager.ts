@@ -50,6 +50,12 @@ export class AwsRouteTableManager implements IRouteTableManager {
         }).promise();
     }
 
+    /**
+     * Deletes a routeTable by its TagName
+     * 
+     * @param routeTableTagName Th TagName of the RouteTable we want to delete
+     * @throws {CannotDeleteMainRouteTableError} If the RouteTable we're trying to delete is a VPC's main RouteTable 
+     */
     public async deleteRouteTable(routeTableTagName: string): Promise<void> {
         const routeTable = await this.getRouteTable(routeTableTagName);
 
