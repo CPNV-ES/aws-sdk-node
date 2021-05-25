@@ -101,7 +101,7 @@ export class AwsRouteTableManager implements IRouteTableManager {
      */
     public async dissociateFromSubnet(routeTableTagName: string, subnetTagName: string | null = null): Promise<void> {
         let associations : EC2Client.RouteTableAssociationList 
-            = await (await this.getRouteTable(routeTableTagName)).Associations ?? [];
+            = (await this.getRouteTable(routeTableTagName)).Associations ?? [];
 
         if(subnetTagName) {
             const subnetId = await this.subnetManager.subnetId(subnetTagName);
@@ -136,7 +136,7 @@ export class AwsRouteTableManager implements IRouteTableManager {
             return false;
 
         let associations : EC2Client.RouteTableAssociationList 
-            = await (await this.getRouteTable(routeTableTagName)).Associations ?? [];
+            = (await this.getRouteTable(routeTableTagName)).Associations ?? [];
 
         const subnetId = await this.subnetManager.subnetId(subnetTagName);
         associations = associations.filter(ass => ass.SubnetId == subnetId);
