@@ -4,87 +4,96 @@ import { IVpcManager } from "src/interfaces/IVpcManager";
 export class AwsVpcManager implements IVpcManager {
   private client: EC2Client;
 
-  private vpcs: EC2Client.Vpc[] = [];
-
-  constructor(awsProfileName: string, awsRegionEndpoint: string) {
+  /**
+   * @param {string} awsRegionEndpoint e.g. ap-southeast-2
+   * @memberof AwsVpcManager
+   */
+  constructor(awsRegionEndpoint: string) {
     this.client = new EC2Client({ region: awsRegionEndpoint });
   }
 
-
+  /**
+   * @param {string} vpcTagName e.g. VIR1NODE
+   * @param {string} cidrBlock e.g. 10.0.0.0/16
+   * @throws if a VPC with the same vpcTagName already exists
+   * @return {Promise<void>}
+   * @memberof AwsVpcManager
+   */
   public async createVpc(vpcTagName: string, cidrBlock: string): Promise<void> {
     const exists = await this.exists(vpcTagName);
 
     if (exists) {
-      throw new Error(`There is already a Vpc with the tag Name ${vpcTagName}`);
+      throw new VpcNameAlreadyExistsError(vpcTagName);
     }
 
-    await this.client.createVpc({
-      CidrBlock: cidrBlock,
-      TagSpecifications: [
-        {
-          ResourceType: "vpc",
-          Tags: [{ Key: "Name", Value: vpcTagName }]
-        }
-      ]
-    }).promise();
-  }
-
-  public async deleteVpc(vpcTagName: string): Promise<void> {
-    let vpcId: string;
-
-    try {
-      vpcId = await this.vpcId(vpcTagName);
-    } catch (e) {
-      console.error(e);
-
-      return;
-    }
-
-    await this.client.deleteVpc({ VpcId: vpcId }).promise();
-  }
-
-  public async exists(vpcTagName: string): Promise<boolean> {
-    try {
-      await this.vpcId(vpcTagName);
-    } catch (e) {
-      // The Vpc doesn't exists
-      return false;
-    }
-
-    return true;
+    await this.client
+      .createVpc({
+        CidrBlock: cidrBlock,
+        TagSpecifications: [
+          {
+            ResourceType: "vpc",
+            Tags: [{ Key: "Name", Value: vpcTagName }],
+          },
+        ],
+      })
+      .promise();
   }
 
   /**
-   * TODO(alexandre): Handle describeVpcs pagination
-   *
-   * @private
-   * @return {*}  {Promise<void>}
+   * @param {string} vpcTagName e.g. VIR1NODE
+   * @return {Promise<void>}
    * @memberof AwsVpcManager
    */
-  private async describeVpcs(): Promise<void> {
-    const describeVpcs: EC2Client.DescribeVpcsResult = await this.client.describeVpcs().promise();
-    this.vpcs = describeVpcs.Vpcs ?? [];
+  public async deleteVpc(vpcTagName: string): Promise<void> {
+    const vpcId = await this.vpcId(vpcTagName);
+
+    if (vpcId) {
+      await this.client.deleteVpc({ VpcId: vpcId }).promise();
+    }
   }
 
-  public async vpcId(vpcTagName: string): Promise<string> {
-    const { Vpcs }: EC2Client.DescribeVpcsResult = await this.client.describeVpcs({
-      Filters: [
-        {
+  /**
+   * @param {string} vpcTagName e.g. VIR1NODE
+   * @return {Promise<boolean>}
+   * @memberof AwsVpcManager
+   */
+  public async exists(vpcTagName: string): Promise<boolean> {
+    const vpcId = await this.vpcId(vpcTagName);
 
-          Name: "tag:Name",
-          Values: [vpcTagName],
-        }
-      ]
-    }).promise();
+    return !!vpcId;
+  }
 
-    if (!Vpcs) {
-      throw new Error(`The Vpc with the tagName: ${vpcTagName} does not exist`);
-    }
+  /**
+   * Get a VPCId by the vpcTagName
+   *
+   * @public
+   * @param {string} vpcTagName e.g. VIR1NODE
+   * @return {Promise<string | null>}
+   * @memberof AwsVpcManager
+   */
 
-    if (!Vpcs[0].VpcId) {
-      throw new Error(`The Vpc with the tagName: ${vpcTagName} does not have a VpcId`);
+  public async vpcId(vpcTagName: string): Promise<string | null> {
+    const { Vpcs }: EC2Client.DescribeVpcsResult = await this.client
+      .describeVpcs({
+        Filters: [
+          {
+            Name: "tag:Name",
+            Values: [vpcTagName],
+          },
+        ],
+      })
+      .promise();
+
+    if (!Vpcs || !Vpcs[0] || !Vpcs[0].VpcId) {
+      return null;
     }
 
     return Vpcs[0].VpcId;
+  }
+}
+
+export class VpcNameAlreadyExistsError extends Error {
+  constructor(vpcTagName: string) {
+    super(`The Vpc with the tagName: ${vpcTagName} already exists`);
   }
 }

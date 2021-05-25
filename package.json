@@ -4,12 +4,12 @@
   "description": "",
   "main": "./dist/tsc/main.js",
   "scripts": {
-    "test": "jest",
+    "test": "jest -i",
     "lint": "eslint src/ --ext .js,.jsx,.ts,.tsx",
     "build": "tsc",
     "clean": "rm -rf dist build",
     "start": "node ./dist/main.js",
-    "docs": "typedoc --entryPoints src/main.ts"
+    "docs": "typedoc"
   },
   "author": "",
   "license": "MIT",
