@@ -1,6 +1,7 @@
 import { AwsRouteTableManager, RouteTableAssociationAlreadyExistsError} from "./AwsRouteTableManager";
 import { AwsVpcManager} from "./AwsVpcManager";
 import { AwsSubnetManager } from './AwsSubnetManager';
+import { AwsInternetGateway } from './AwsInternetGateway';
 import { config } from "../config";
 
 const profileName = "";
@@ -8,16 +9,21 @@ const regionEndpint = config.AWS_REGION;
 const routeTableTagName = "RTB-pub-VIR1NODE-test";
 const subnetTagName = "SUB-routeTableTests";
 const vpcTagName = "VIR1NODE-routeTableTests";
-const cidrBlock = "10.0.0.0/16";
+const igwTagName = "IGW-routeTableTests";
+const diffNetworkIgwTagName = "IGW-routeTableTestsDiffNetwork";
+const vpcCidrBlock = "10.0.0.0/16";
+const routeCirdBlock = "0.0.0.0/0";
 
 let vpcManager: AwsVpcManager;
 let subnetManager: AwsSubnetManager;
 let routeTableManager: AwsRouteTableManager;
+let igwManager: AwsInternetGateway;
 
 beforeAll(async () => {
   vpcManager = new AwsVpcManager(profileName, regionEndpint);
   subnetManager = new AwsSubnetManager(regionEndpint, vpcManager);
-  routeTableManager = new AwsRouteTableManager(profileName, regionEndpint, vpcManager, subnetManager);
+  igwManager = new AwsInternetGateway(regionEndpint);
+  routeTableManager = new AwsRouteTableManager(profileName, regionEndpint, vpcManager, subnetManager, igwManager);
 
   if (await subnetManager.exists(subnetTagName)) {
     await subnetManager.deleteSubnet(subnetTagName);
@@ -31,13 +37,20 @@ beforeAll(async () => {
     await vpcManager.deleteVpc(vpcTagName);
   }
 
-  await vpcManager.createVpc(vpcTagName, cidrBlock);
-  await subnetManager.createSubnet(subnetTagName, vpcTagName, cidrBlock);
+  await vpcManager.createVpc(vpcTagName, vpcCidrBlock);
+  await subnetManager.createSubnet(subnetTagName, vpcTagName, vpcCidrBlock);
+  await igwManager.createInternetGateway(igwTagName);
+  await igwManager.attachInternetGateway(igwTagName, vpcTagName);
+  await igwManager.createInternetGateway(diffNetworkIgwTagName);  // this igw is not attached to any network
 });
 
 afterEach(async () => {
   if (await routeTableManager.isAssociatedWithSubnet(routeTableTagName, subnetTagName)) {
     await routeTableManager.dissociateFromSubnet(routeTableTagName, subnetTagName);
+  }
+
+  if (await routeTableManager.hasRoute(routeTableTagName, routeCirdBlock)) {
+    await routeTableManager.deleteRoute(routeTableTagName, routeCirdBlock);
   }
 
   if (await routeTableManager.exists(routeTableTagName)) {
@@ -56,6 +69,15 @@ afterAll(async () => {
   
   if (await routeTableManager.exists(routeTableTagName)) {
     await routeTableManager.deleteRouteTable(routeTableTagName);
+  }
+
+  if(await igwManager.existInternetGateway(igwTagName)) {
+    await igwManager.detachInternetGateway(igwTagName, vpcTagName);
+    await igwManager.deleteInternetGateway(igwTagName);
+  }
+
+  if(await igwManager.existInternetGateway(diffNetworkIgwTagName)) {
+    await igwManager.deleteInternetGateway(diffNetworkIgwTagName);
   }
   
   if (await vpcManager.exists(vpcTagName)) {
@@ -104,6 +126,29 @@ describe("AwsRouteTable unit tests", () => {
     await routeTableManager.dissociateFromSubnet(routeTableTagName, subnetTagName);
 
     expect(await routeTableManager.isAssociatedWithSubnet(routeTableTagName, subnetTagName)).toBeFalsy();
+  });
+
+  test("Create route to InternetGateway", async () => {
+    await routeTableManager.createRouteTable(routeTableTagName, vpcTagName);
+    await routeTableManager.addRouteToIGW(routeTableTagName, igwTagName, routeCirdBlock);
+
+    expect(await routeTableManager.hasRoute(routeTableTagName, routeCirdBlock)).toBeTruthy();
+  });
+
+  test("Delete route to InternetGateway", async () => {
+    await routeTableManager.createRouteTable(routeTableTagName, vpcTagName);
+    await routeTableManager.addRouteToIGW(routeTableTagName, igwTagName, routeCirdBlock);
+    await routeTableManager.deleteRoute(routeTableTagName, routeCirdBlock);
+
+    expect(await routeTableManager.hasRoute(routeTableTagName, routeCirdBlock)).toBeFalsy();
+  });
+
+  test("RouteTable needs to be in the same network as IGW to create route", async () => {
+    await routeTableManager.createRouteTable(routeTableTagName, vpcTagName);
+
+    await expect(
+      routeTableManager.addRouteToIGW(routeTableTagName, diffNetworkIgwTagName, routeCirdBlock)
+    ).rejects.toThrow();
   });
 });
 
