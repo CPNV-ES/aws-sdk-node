@@ -71,6 +71,7 @@ export class AwsVpcManager implements IVpcManager {
    * @return {Promise<string | null>}
    * @memberof AwsVpcManager
    */
+
   public async vpcId(vpcTagName: string): Promise<string | null> {
     const { Vpcs }: EC2Client.DescribeVpcsResult = await this.client
       .describeVpcs({
