@@ -66,12 +66,12 @@ export class AwsVpcManager implements IVpcManager {
   /**
    * Get a VPCId by the vpcTagName
    *
-   * @private
+   * @public
    * @param {string} vpcTagName e.g. VIR1NODE
    * @return {Promise<string | null>}
    * @memberof AwsVpcManager
    */
-  private async vpcId(vpcTagName: string): Promise<string | null> {
+  public async vpcId(vpcTagName: string): Promise<string | null> {
     const { Vpcs }: EC2Client.DescribeVpcsResult = await this.client
       .describeVpcs({
         Filters: [

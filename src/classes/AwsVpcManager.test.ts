@@ -4,8 +4,7 @@ import { config } from "../config";
 const regionEndpoint = config.AWS_REGION;
 const vpcTagName = "VIR1NODE";
 const cidrBlock = "10.0.0.0/16";
-
-let vpcManager: AwsVpcManager;
+const vpcManager = new AwsVpcManager(regionEndpoint);
 
 beforeAll(async () => {
   // This ensures that we start the tests without any pre-existing VPC.
@@ -13,12 +12,6 @@ beforeAll(async () => {
   if (await vpcManager.exists(vpcTagName)) {
     await vpcManager.deleteVpc(vpcTagName);
   }
-});
-
-beforeEach(async () => {
-  vpcManager = new AwsVpcManager(regionEndpoint);
-
-  jest.setTimeout(10000);
 });
 
 afterEach(async () => {
