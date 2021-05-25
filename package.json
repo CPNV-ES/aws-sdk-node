@@ -4,7 +4,7 @@
   "description": "",
   "main": "./dist/tsc/main.js",
   "scripts": {
-    "test": "jest",
+    "test": "jest -i",
     "lint": "eslint src/ --ext .js,.jsx,.ts,.tsx",
     "build": "tsc",
     "clean": "rm -rf dist build",

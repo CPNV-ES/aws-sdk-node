@@ -1,9 +1,8 @@
 import { AwsVpcManager } from "./AwsVpcManager";
-import { config } from "../config";
 
-const regionEndpoint = config.AWS_REGION;
-const vpcTagName = "VIR1NODE";
-const cidrBlock = "10.0.0.0/16";
+const regionEndpoint = process.env.AWS_REGION ?? "";
+const vpcTagName = process.env.VPC_TAG_NAME ?? "";
+const cidrBlock = process.env.VPC_CIDR_BLOCK ?? "";
 const vpcManager = new AwsVpcManager(regionEndpoint);
 
 beforeAll(async () => {

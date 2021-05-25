@@ -1,11 +1,10 @@
 import { AwsSubnetManager } from "./AwsSubnetManager";
-import { config } from "../config";
 import { AwsVpcManager } from "./AwsVpcManager";
 
-const regionEndpint = config.AWS_REGION;
-const vpcTagname = "VIR1NODE";
-const subnetTagname = "VIR1NODE";
-const cidrBlock = "10.0.0.0/16";
+const regionEndpint = process.env.AWS_REGION ?? "";
+const vpcTagname = process.env.VPC_TAG_NAME ?? "";
+const subnetTagname = process.env.SUBNET_TAG_NAME ?? "";
+const cidrBlock = process.env.SUBNET_CIDR_BLOCK ?? "";
 
 const vpcManager = new AwsVpcManager(regionEndpint);
 const subnetManager = new AwsSubnetManager(regionEndpint, vpcManager);
