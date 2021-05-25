@@ -59,6 +59,9 @@ export class AwsRouteTableManager implements IRouteTableManager {
     public async deleteRouteTable(routeTableTagName: string): Promise<void> {
         const routeTable = await this.getRouteTable(routeTableTagName);
 
+        if(!routeTable)
+            return;
+
         // We can't delete a RouteTable if it is a Main RouteTable
         if(routeTable.Associations && routeTable.Associations.find(ass => ass.Main)) {
             throw new CannotDeleteMainRouteTableError(routeTableTagName);
@@ -101,7 +104,7 @@ export class AwsRouteTableManager implements IRouteTableManager {
      */
     public async dissociateFromSubnet(routeTableTagName: string, subnetTagName: string | null = null): Promise<void> {
         let associations : EC2Client.RouteTableAssociationList 
-            = (await this.getRouteTable(routeTableTagName)).Associations ?? [];
+            = (await this.getRouteTable(routeTableTagName))?.Associations ?? [];
 
         if(subnetTagName) {
             const subnetId = await this.subnetManager.subnetId(subnetTagName);
@@ -145,7 +148,7 @@ export class AwsRouteTableManager implements IRouteTableManager {
             return false;
 
         let associations : EC2Client.RouteTableAssociationList 
-            = (await this.getRouteTable(routeTableTagName)).Associations ?? [];
+            = (await this.getRouteTable(routeTableTagName))?.Associations ?? [];
 
         const subnetId = await this.subnetManager.subnetId(subnetTagName);
         associations = associations.filter(ass => ass.SubnetId == subnetId);
@@ -175,7 +178,7 @@ export class AwsRouteTableManager implements IRouteTableManager {
      * @memberof AwsRouteTableManager
      */
     public async routeTableId(routeTableTagName: string): Promise<string | null> {
-        const routeTable : EC2Client.RouteTable = await this.getRouteTable(routeTableTagName);
+        const routeTable = await this.getRouteTable(routeTableTagName);
 
         if(!routeTable || !routeTable.RouteTableId){
             return null;
@@ -184,7 +187,7 @@ export class AwsRouteTableManager implements IRouteTableManager {
         return routeTable.RouteTableId;
     }
 
-    private async getRouteTable(routeTableTagName: string) : Promise<EC2Client.RouteTable> {
+    private async getRouteTable(routeTableTagName: string) : Promise<EC2Client.RouteTable | null> {
         const { RouteTables }: EC2Client.DescribeRouteTablesResult = await this.client.describeRouteTables({
             Filters: [{
                 Name: "tag:Name",
@@ -192,7 +195,11 @@ export class AwsRouteTableManager implements IRouteTableManager {
             }]
         }).promise();
 
-        return RouteTables![0];
+        if(!RouteTables || !RouteTables[0] || !RouteTables[0].RouteTableId) {
+            return null;
+        }
+
+        return RouteTables[0];
     }
 }
 
