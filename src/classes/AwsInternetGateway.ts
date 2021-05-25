@@ -86,7 +86,7 @@ export class AwsInternetGateway implements IInternetGateway {
         return true;
     }
 
-    private async igwId(igwTagName: string): Promise<string> {
+    public async igwId(igwTagName: string): Promise<string> {
         const { InternetGateways }: EC2Client.DescribeInternetGatewaysResult = await this.client.describeInternetGateways({
             Filters: [
                 {
