@@ -7,32 +7,23 @@ const vpcTagname = "VIR1NODE";
 const subnetTagname = "VIR1NODE";
 const cidrBlock = "10.0.0.0/16";
 
-let subnetManager: AwsSubnetManager;
+const vpcManager = new AwsVpcManager(regionEndpint);
+const subnetManager = new AwsSubnetManager(regionEndpint, vpcManager);
 
 beforeAll(async () => {
-  const vpcManager = new AwsVpcManager(regionEndpint);
-  const setupSubnetManager = new AwsSubnetManager(regionEndpint, vpcManager);
-
   if (!(await vpcManager.exists(vpcTagname))) {
     await vpcManager.createVpc(vpcTagname, cidrBlock);
   }
 
-  if (await setupSubnetManager.exists(subnetTagname)) {
-    await setupSubnetManager.deleteSubnet(subnetTagname);
+  if (await subnetManager.exists(subnetTagname)) {
+    await subnetManager.deleteSubnet(subnetTagname);
   }
 });
 
 afterAll(async () => {
-  const vpcManager = new AwsVpcManager(regionEndpint);
-
   if (await vpcManager.exists(vpcTagname)) {
     await vpcManager.deleteVpc(vpcTagname);
   }
-});
-
-beforeEach(() => {
-  const vpcManager = new AwsVpcManager(regionEndpint);
-  subnetManager = new AwsSubnetManager(regionEndpint, vpcManager);
 });
 
 afterEach(async () => {
