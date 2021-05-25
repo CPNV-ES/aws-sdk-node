@@ -60,6 +60,12 @@ describe("AwsSubnetManager unit tests", () => {
 
     expect(await subnetManager.exists(subnetTagname)).toBeTruthy();
   });
+
+  test("Cidr Block impossible", async () => {
+    await expect(
+      subnetManager.createSubnet(subnetTagname, vpcTagname, "10.0.0.0/16")
+    ).rejects.toThrow();
+  });
 });
 
 describe("AwsSubnetManager integration tests", () => {

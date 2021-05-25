@@ -24,9 +24,7 @@ export class AwsSubnetManager implements ISubnetManager {
     vpcTagName: string,
     cidrBlock: string
   ): Promise<void> {
-    const subnetExists = await this.exists(subnetTagName);
-
-    if (subnetExists) {
+    if (await this.exists(subnetTagName)) {
       throw new SubnetNameAlreadyExistsError(subnetTagName);
     }
 
@@ -36,18 +34,26 @@ export class AwsSubnetManager implements ISubnetManager {
       throw new VpcDoesNotExistError(vpcTagName);
     }
 
-    await this.client
-      .createSubnet({
-        VpcId: vpcId,
-        CidrBlock: cidrBlock,
-        TagSpecifications: [
-          {
-            ResourceType: "subnet",
-            Tags: [{ Key: "Name", Value: subnetTagName }],
-          },
-        ],
-      })
-      .promise();
+    try {
+      await this.client
+        .createSubnet({
+          VpcId: vpcId,
+          CidrBlock: cidrBlock,
+          TagSpecifications: [
+            {
+              ResourceType: "subnet",
+              Tags: [{ Key: "Name", Value: subnetTagName }],
+            },
+          ],
+        })
+        .promise();
+    } catch (e) {
+      if (e.code === "InvalidSubnet.Range") {
+        throw new CidrBlockImpossible(cidrBlock);
+      }
+
+      throw e;
+    }
   }
 
   /**
@@ -111,5 +117,11 @@ export class SubnetNameAlreadyExistsError extends Error {
 export class VpcDoesNotExistError extends Error {
   constructor(vpcTagName: string) {
     super(`The Vpc with the tagName: ${vpcTagName} does not exists`);
+  }
+}
+
+export class CidrBlockImpossible extends Error {
+  constructor(cidrBlock: string) {
+    super(`The cidrBlock: ${cidrBlock} cannot be assigned to this subnet`);
   }
 }
