@@ -73,6 +73,19 @@ export class AwsRouteTableManager implements IRouteTableManager {
     }
 
     /**
+     * Returns whether or not a RouteTable with the specified tagName exists
+     * 
+     * @param {string} routeTableTagName e.g. RTB-PUBLIC-SUBNET-EXAMPLE
+     * @return {Promise<boolean>} true if a RouteTable with the specified tagName exists, false otherwise
+     * @memberof AwsRouteTableManager
+     */
+    public async exists(routeTableTagName: string): Promise<boolean> {
+        const routeTableId = await this.routeTableId(routeTableTagName);
+
+        return !!routeTableId;
+    }
+
+    /**
      * Associates a RouteTable with a Subnet
      * 
      * @param routeTableTagName The TagName of the RouteTable we want associated
@@ -154,19 +167,6 @@ export class AwsRouteTableManager implements IRouteTableManager {
         associations = associations.filter(ass => ass.SubnetId == subnetId);
 
         return associations.length > 0;
-    }
-
-    /**
-     * Returns whether or not a RouteTable with the specified tagName exists
-     * 
-     * @param {string} routeTableTagName e.g. RTB-PUBLIC-SUBNET-EXAMPLE
-     * @return {Promise<boolean>} true if a RouteTable with the specified tagName exists, false otherwise
-     * @memberof AwsRouteTableManager
-     */
-    public async exists(routeTableTagName: string): Promise<boolean> {
-        const routeTableId = await this.routeTableId(routeTableTagName);
-
-        return !!routeTableId;
     }
 
     /**
