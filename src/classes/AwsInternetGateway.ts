@@ -55,7 +55,24 @@ export class AwsInternetGateway implements IInternetGateway {
 
             return;
         }
-        await this.client.attachInternetGateway({InternetGatewayId: InternetGatewayId, VpcId: vpcId})
+        await this.client.attachInternetGateway({ InternetGatewayId: InternetGatewayId, VpcId: vpcId })
+    }
+
+    public async detachInternetGateway(igwTagName: string, vpcTagName: string): Promise<void> {
+        let InternetGatewayId: string;
+        let vpcId: string;
+
+        const aws = new AwsVpcManager("", config.AWS_REGION);
+
+        try {
+            InternetGatewayId = await this.igwId(igwTagName);
+            vpcId = await aws.vpcId(vpcTagName);
+        } catch (e) {
+            console.error(e);
+
+            return;
+        }
+        await this.client.detachInternetGateway({ InternetGatewayId: InternetGatewayId, VpcId: vpcId })
     }
 
     public async existInternetGateway(igwTagName: string): Promise<boolean> {
