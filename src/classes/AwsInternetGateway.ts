@@ -46,6 +46,11 @@ export class AwsInternetGateway implements IInternetGateway {
         let vpcId: string;
 
         const aws = new AwsVpcManager("", config.AWS_REGION);
+        const exists = await aws.exists(vpcTagName);
+
+        if (!exists) {
+            throw new Error(`There is already a Vpc with the tag Name ${vpcTagName}`);
+        }
 
         try {
             InternetGatewayId = await this.igwId(igwTagName);

@@ -1,7 +1,6 @@
 import { AwsInternetGateway } from "./AwsInternetGateway";
 import { AwsVpcManager } from "./AwsVpcManager";
 import { config } from "../config";
-import { exception } from "node:console";
 const regionEndpint = config.AWS_REGION;
 const igwTagName = "IGW_test";
 const vpcTagName = "VPC_test";
