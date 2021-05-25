@@ -122,6 +122,15 @@ export class AwsRouteTableManager implements IRouteTableManager {
     }
 
     /**
+     * Dissociates the specified RouteTable from all of its associations with SubNets
+     * 
+     * @param routeTableTagName The TagName of the RouteTable the Subnet has the association we want removed
+     */
+         public async dissociateFromAllSubnets(routeTableTagName: string): Promise<void> {
+            await this.dissociateFromSubnet(routeTableTagName)
+    }
+
+    /**
      * Checks if the specified RouteTable and Subnet have an active association
      * 
      * @param routeTableTagName 
@@ -145,15 +154,6 @@ export class AwsRouteTableManager implements IRouteTableManager {
     }
 
     /**
-     * Dissociates the specified RouteTable from all of its associations with SubNets
-     * 
-     * @param routeTableTagName The TagName of the RouteTable the Subnet has the association we want removed
-     */
-    public async dissociateFromAllSubnets(routeTableTagName: string): Promise<void> {
-        await this.dissociateFromSubnet(routeTableTagName)
-    }
-
-    /**
      * Returns whether or not a RouteTable with the specified tagName exists
      * 
      * @param {string} routeTableTagName e.g. RTB-PUBLIC-SUBNET-EXAMPLE
@@ -164,17 +164,6 @@ export class AwsRouteTableManager implements IRouteTableManager {
         const routeTableId = await this.routeTableId(routeTableTagName);
 
         return !!routeTableId;
-    }
-
-    private async getRouteTable(routeTableTagName: string) : Promise<EC2Client.RouteTable> {
-        const { RouteTables }: EC2Client.DescribeRouteTablesResult = await this.client.describeRouteTables({
-            Filters: [{
-                Name: "tag:Name",
-                Values: [ routeTableTagName ],
-            }]
-        }).promise();
-
-        return RouteTables![0];
     }
 
     /**
@@ -193,6 +182,17 @@ export class AwsRouteTableManager implements IRouteTableManager {
         }
 
         return routeTable.RouteTableId;
+    }
+
+    private async getRouteTable(routeTableTagName: string) : Promise<EC2Client.RouteTable> {
+        const { RouteTables }: EC2Client.DescribeRouteTablesResult = await this.client.describeRouteTables({
+            Filters: [{
+                Name: "tag:Name",
+                Values: [ routeTableTagName ],
+            }]
+        }).promise();
+
+        return RouteTables![0];
     }
 }
 
