@@ -2,21 +2,24 @@ import { IRouteTableManager } from "src/interfaces/IRouteTableManager";
 import EC2Client from "aws-sdk/clients/ec2";
 import { AwsVpcManager, VpcDoesNotExistError } from "./AwsVpcManager";
 import { AwsSubnetManager, SubnetDoesNotExistError } from './AwsSubnetManager';
+import { AwsInternetGateway } from './AwsInternetGateway';
 
 export class AwsRouteTableManager implements IRouteTableManager {
     private client: EC2Client;
     private vpcManager: AwsVpcManager;
     private subnetManager: AwsSubnetManager;
-    
+    private internetGatewayManager: AwsInternetGateway;
+
     /**
     * @param {string} awsProfileName
     * @param {string} awsRegionEndpoint e.g. ap-southeast-2
     * @memberof AwsRouteTableManager
     */
-    constructor(awsProfileName: string, awsRegionEndpoint: string, vpcManager: AwsVpcManager, subnetManager: AwsSubnetManager) {
+    constructor(awsProfileName: string, awsRegionEndpoint: string, vpcManager: AwsVpcManager, subnetManager: AwsSubnetManager, igwManager: AwsInternetGateway) {
        this.client = new EC2Client({ region: awsRegionEndpoint });
        this.vpcManager = vpcManager;
        this.subnetManager = subnetManager;
+       this.internetGatewayManager = igwManager;
     }
 
     /**
@@ -86,6 +89,59 @@ export class AwsRouteTableManager implements IRouteTableManager {
     }
 
     /**
+     * Adds a new Route in the RouteTable targeting an InternetGateway with a destination CidrBlock 
+     * 
+     * @param routeTableTagName 
+     * @param internetGatewayTagName 
+     * @param destinationCidrBlock 
+     */
+    public async addRouteToIGW(routeTableTagName: string, internetGatewayTagName: string, destinationCidrBlock: string): Promise<void> {
+        const routeTable = await this.getRouteTable(routeTableTagName);
+
+        if(!routeTable)
+            throw new RouteTableDoesNotExistError(routeTableTagName);
+
+        const igwId = await this.internetGatewayManager.igwId(internetGatewayTagName);
+        
+        await this.client.createRoute({
+            RouteTableId: routeTable.RouteTableId!,
+            GatewayId: igwId,
+            DestinationCidrBlock: destinationCidrBlock
+        }).promise();
+    }
+
+    /**
+     * Deletes a Route in the RouteTable by its CidrBlock
+     * 
+     * @param routeTableTagName 
+     * @param destinationCidrBlock 
+     */
+    public async deleteRoute(routeTableTagName: string, destinationCidrBlock: string): Promise<void> {
+        const routeTable = await this.getRouteTable(routeTableTagName);
+
+        if(!routeTable)
+            throw new RouteTableNameAlreadyExistsError(routeTableTagName);
+
+        await this.client.deleteRoute({
+            RouteTableId: routeTable.RouteTableId!,
+            DestinationCidrBlock: destinationCidrBlock
+        }).promise();
+    }
+
+    /**
+     * Checks whether or not the RouteTable has a Route with the specified CidrBlock as a Destination
+     * 
+     * @param routeTableTagName 
+     * @param destinationCidrBlock 
+     * @returns {boolean} true if the RouteTable has a matching Route, false otherwise
+     */
+    public async hasRoute(routeTableTagName: string, destinationCidrBlock: string): Promise<boolean> {
+        const routeTable = await this.getRouteTable(routeTableTagName);
+
+        return routeTable?.Routes?.some(r => r.DestinationCidrBlock == destinationCidrBlock) || false;
+    }
+
+    /**
      * Associates a RouteTable with a Subnet
      * 
      * @param routeTableTagName The TagName of the RouteTable we want associated
@@ -142,7 +198,7 @@ export class AwsRouteTableManager implements IRouteTableManager {
      * 
      * @param routeTableTagName The TagName of the RouteTable the Subnet has the association we want removed
      */
-         public async dissociateFromAllSubnets(routeTableTagName: string): Promise<void> {
+    public async dissociateFromAllSubnets(routeTableTagName: string): Promise<void> {
             await this.dissociateFromSubnet(routeTableTagName)
     }
 
