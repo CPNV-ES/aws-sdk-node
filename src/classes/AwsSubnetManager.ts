@@ -24,20 +24,17 @@ export class AwsSubnetManager implements ISubnetManager {
     vpcTagName: string,
     cidrBlock: string
   ): Promise<void> {
-    const [subnetExists, vpcExists] = await Promise.all([
-      this.exists(subnetTagName),
-      this.awsVpcManager.exists(vpcTagName),
-    ]);
+    const subnetExists = await this.exists(subnetTagName);
 
     if (subnetExists) {
       throw new SubnetNameAlreadyExistsError(subnetTagName);
     }
 
-    if (!vpcExists) {
+    const vpcId = await this.awsVpcManager.vpcId(vpcTagName);
+
+    if (!vpcId) {
       throw new VpcDoesNotExistError(vpcTagName);
     }
-
-    const vpcId = await this.awsVpcManager.vpcId(vpcTagName);
 
     await this.client
       .createSubnet({

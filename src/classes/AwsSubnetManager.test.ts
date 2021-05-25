@@ -10,7 +10,7 @@ const cidrBlock = "10.0.0.0/16";
 let subnetManager: AwsSubnetManager;
 
 beforeAll(async () => {
-  const vpcManager = new AwsVpcManager("", regionEndpint);
+  const vpcManager = new AwsVpcManager(regionEndpint);
   const setupSubnetManager = new AwsSubnetManager(regionEndpint, vpcManager);
 
   if (!(await vpcManager.exists(vpcTagname))) {
@@ -23,7 +23,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  const vpcManager = new AwsVpcManager("", regionEndpint);
+  const vpcManager = new AwsVpcManager(regionEndpint);
 
   if (await vpcManager.exists(vpcTagname)) {
     await vpcManager.deleteVpc(vpcTagname);
@@ -31,7 +31,7 @@ afterAll(async () => {
 });
 
 beforeEach(() => {
-  const vpcManager = new AwsVpcManager("", regionEndpint);
+  const vpcManager = new AwsVpcManager(regionEndpint);
   subnetManager = new AwsSubnetManager(regionEndpint, vpcManager);
 });
 

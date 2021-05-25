@@ -1,15 +1,17 @@
 import { AwsVpcManager } from "./AwsVpcManager";
 import { config } from "../config";
 
-const profileName = "";
-const regionEndpint = config.AWS_REGION;
+const regionEndpoint = config.AWS_REGION;
 const vpcTagName = "VIR1NODE";
 const cidrBlock = "10.0.0.0/16";
+const vpcManager = new AwsVpcManager(regionEndpoint);
 
-let vpcManager: AwsVpcManager;
-
-beforeEach(() => {
-  vpcManager = new AwsVpcManager(profileName, regionEndpint);
+beforeAll(async () => {
+  // This ensures that we start the tests without any pre-existing VPC.
+  // The tests would fail if we did not perform this action.
+  if (await vpcManager.exists(vpcTagName)) {
+    await vpcManager.deleteVpc(vpcTagName);
+  }
 });
 
 afterEach(async () => {
