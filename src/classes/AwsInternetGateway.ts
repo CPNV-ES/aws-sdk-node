@@ -55,7 +55,7 @@ export class AwsInternetGateway implements IInternetGateway {
 
             return;
         }
-        await this.client.attachInternetGateway({ InternetGatewayId: InternetGatewayId, VpcId: vpcId })
+        await this.client.attachInternetGateway({ InternetGatewayId: InternetGatewayId, VpcId: vpcId }).promise();
     }
 
     public async detachInternetGateway(igwTagName: string, vpcTagName: string): Promise<void> {
@@ -72,7 +72,7 @@ export class AwsInternetGateway implements IInternetGateway {
 
             return;
         }
-        await this.client.detachInternetGateway({ InternetGatewayId: InternetGatewayId, VpcId: vpcId })
+        await this.client.detachInternetGateway({ InternetGatewayId: InternetGatewayId, VpcId: vpcId }).promise();
     }
 
     public async existInternetGateway(igwTagName: string): Promise<boolean> {

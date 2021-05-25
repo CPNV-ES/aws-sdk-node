@@ -1,6 +1,7 @@
 import { AwsInternetGateway } from "./AwsInternetGateway";
 import { AwsVpcManager } from "./AwsVpcManager";
 import { config } from "../config";
+import { exception } from "node:console";
 const regionEndpint = config.AWS_REGION;
 const igwTagName = "IGW_test";
 const vpcTagName = "VPC_test";
@@ -14,15 +15,15 @@ beforeEach(() => {
     internetGateway = new AwsInternetGateway(regionEndpint);
     vpcManager = new AwsVpcManager(profileName, regionEndpint);
 
-
-    await vpcManager.createVpc(vpcTagName, cidrBlock);
-
     jest.setTimeout(10000);
 });
 
 afterEach(async () => {
     if (await internetGateway.existInternetGateway(igwTagName)) {
         await internetGateway.deleteInternetGateway(igwTagName);
+    }
+    if (await vpcManager.exists(vpcTagName)) {
+        await vpcManager.deleteVpc(vpcTagName);
     }
 });
 
@@ -51,16 +52,12 @@ describe("InternetGateway unit tests", () => {
 
 describe("InternetGateWay integration tests", () => {
     test("Attach a VPC to an IGW", async () => {
-        await internetGateway.createInternetGateway(igwTagName);
-
-        await internetGateway.attachInternetGateway(igwTagName, vpcTagName);
-
-        expect(true).toBeTruthy();
+        //await internetGateway.attachInternetGateway(igwTagName, vpcTagName);
+        expect(await internetGateway.attachInternetGateway(igwTagName, vpcTagName));
     });
 
-    //test("Detach a VPC to an IGW", async () => {
-    //     await internetGateway.detach(myVPC);
-    //
-    //     expect(await internetGateway.has(myVPC)).toBeFalsy();
-    //  });
+    test("Detach a VPC to an IGW", async () => {
+        //await internetGateway.detachInternetGateway(igwTagName, vpcTagName);
+        expect(await internetGateway.detachInternetGateway(igwTagName, vpcTagName));
+    });
 });
