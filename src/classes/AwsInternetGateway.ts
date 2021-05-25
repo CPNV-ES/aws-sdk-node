@@ -41,7 +41,7 @@ export class AwsInternetGateway implements IInternetGateway {
         await this.client.deleteInternetGateway({ InternetGatewayId: InternetGatewayId }).promise();
     }
 
-    public async attachInternetGateway(igwTagName: string, vpcTagName: string): Promise<void> {
+    public async attachInternetGateway(igwTagName: string, vpcTagName: string): Promise<boolean> {
         let InternetGatewayId: string;
         let vpcId: string;
 
@@ -53,12 +53,13 @@ export class AwsInternetGateway implements IInternetGateway {
         } catch (e) {
             console.error(e);
 
-            return;
+            return false;
         }
         await this.client.attachInternetGateway({ InternetGatewayId: InternetGatewayId, VpcId: vpcId }).promise();
+        return true;
     }
 
-    public async detachInternetGateway(igwTagName: string, vpcTagName: string): Promise<void> {
+    public async detachInternetGateway(igwTagName: string, vpcTagName: string): Promise<boolean> {
         let InternetGatewayId: string;
         let vpcId: string;
 
@@ -69,10 +70,10 @@ export class AwsInternetGateway implements IInternetGateway {
             vpcId = await aws.vpcId(vpcTagName);
         } catch (e) {
             console.error(e);
-
-            return;
+            return false;
         }
         await this.client.detachInternetGateway({ InternetGatewayId: InternetGatewayId, VpcId: vpcId }).promise();
+        return true;
     }
 
     public async existInternetGateway(igwTagName: string): Promise<boolean> {
@@ -90,7 +91,6 @@ export class AwsInternetGateway implements IInternetGateway {
         const { InternetGateways }: EC2Client.DescribeInternetGatewaysResult = await this.client.describeInternetGateways({
             Filters: [
                 {
-
                     Name: "tag:Name",
                     Values: [igwTagName],
                 }
@@ -99,6 +99,10 @@ export class AwsInternetGateway implements IInternetGateway {
 
         if (!InternetGateways) {
             throw new Error(`The Igw with the tagName: ${igwTagName} does not exist`);
+        }
+
+        if (!InternetGateways[0]) {
+            throw new Error(`The Igw's index of ${igwTagName} is null`);
         }
 
         if (!InternetGateways[0].InternetGatewayId) {

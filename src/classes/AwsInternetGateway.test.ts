@@ -15,7 +15,7 @@ beforeEach(() => {
     internetGateway = new AwsInternetGateway(regionEndpint);
     vpcManager = new AwsVpcManager(profileName, regionEndpint);
 
-    jest.setTimeout(10000);
+    jest.setTimeout(60000);
 });
 
 afterEach(async () => {
@@ -51,13 +51,12 @@ describe("InternetGateway unit tests", () => {
 });
 
 describe("InternetGateWay integration tests", () => {
-    test("Attach a VPC to an IGW", async () => {
-        //await internetGateway.attachInternetGateway(igwTagName, vpcTagName);
-        expect(await internetGateway.attachInternetGateway(igwTagName, vpcTagName));
-    });
+    test("Attach and detach a VPC to an IGW", async () => {
+        await internetGateway.createInternetGateway(igwTagName);
+        await vpcManager.createVpc(vpcTagName, cidrBlock);
 
-    test("Detach a VPC to an IGW", async () => {
-        //await internetGateway.detachInternetGateway(igwTagName, vpcTagName);
-        expect(await internetGateway.detachInternetGateway(igwTagName, vpcTagName));
+        expect(await internetGateway.attachInternetGateway(igwTagName, vpcTagName)).toBeTruthy();
+        expect(await internetGateway.detachInternetGateway(igwTagName, vpcTagName)).toBeTruthy();
+
     });
 });
