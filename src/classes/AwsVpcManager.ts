@@ -98,7 +98,7 @@ export class AwsVpcManager implements IVpcManager {
   /**
    * Get a VPCId by the vpcTagName
    *
-   * @private
+   * @public
    * @param {string} vpcTagName e.g. VIR1NODE
    * @return {Promise<string>}
    * @throws if no Vpc with the specified vpcTagName was
