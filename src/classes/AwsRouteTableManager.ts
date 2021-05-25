@@ -1,19 +1,22 @@
 import { IRouteTableManager } from "src/interfaces/IRouteTableManager";
 import EC2Client from "aws-sdk/clients/ec2";
 import { AwsVpcManager, VpcDoesNotExistError } from "./AwsVpcManager";
+import { AwsSubnetManager, SubnetDoesNotExistError } from './AwsSubnetManager';
 
 export class AwsRouteTableManager implements IRouteTableManager {
     private client: EC2Client;
     private vpcManager: AwsVpcManager;
+    private subnetManager: AwsSubnetManager;
     
     /**
     * @param {string} awsProfileName
     * @param {string} awsRegionEndpoint e.g. ap-southeast-2
     * @memberof AwsRouteTableManager
     */
-    constructor(awsProfileName: string, awsRegionEndpoint: string, vpcManager: AwsVpcManager) {
+    constructor(awsProfileName: string, awsRegionEndpoint: string, vpcManager: AwsVpcManager, subnetManager: AwsSubnetManager) {
        this.client = new EC2Client({ region: awsRegionEndpoint });
        this.vpcManager = vpcManager;
+       this.subnetManager = subnetManager;
     }
 
     /**
@@ -60,10 +63,24 @@ export class AwsRouteTableManager implements IRouteTableManager {
         await this.client.deleteRouteTable({ RouteTableId: routeTable.RouteTableId! }).promise();
     }
 
+    /**
+     * Associates a RouteTable with a Subnet
+     * 
+     * @param routeTableTagName The TagName of the RouteTable we want associated
+     * @param subnetTagName The Tagname of the Subnet we want to form an association with
+     */
     public async associateWithSubnet(routeTableTagName: string, subnetTagName: string): Promise<void> {
-        const routeTableId = "";    // TODO: get routetable id from tagname
-        const subnetId = "";    // TODO: get subnet id from tagname
+        const routeTableId = await this.routeTableId(routeTableTagName);
+        const subnetId = await this.subnetManager.subnetId(subnetTagName);
         
+        if(!routeTableId) {
+            throw new RouteTableDoesNotExistError(routeTableTagName);
+        }
+
+        if(!subnetId) {
+            throw new SubnetDoesNotExistError(subnetTagName);
+        }
+
         await this.client.associateRouteTable({
             RouteTableId: routeTableId,
             SubnetId: subnetId
@@ -71,16 +88,17 @@ export class AwsRouteTableManager implements IRouteTableManager {
     }
 
     /**
+     * Dissociates the RouteTable from its association with a specified Subnet 
      * 
-     * @param routeTableTagName The TagName of the RouteTable the Subnet has the association we want removed
-     * @param subnetTagName The TagName of the Subnet to dissociate from the RouteTable
+     * @param routeTableTagName The TagName of the RouteTable that has the association we want removed
+     * @param subnetTagName The TagName of the Subnet to dissociate from the RouteTable, or null to dissociate from all Subnets
      */
     public async dissociateFromSubnet(routeTableTagName: string, subnetTagName: string | null = null): Promise<void> {
         let associations : EC2Client.RouteTableAssociationList 
             = await (await this.getRouteTable(routeTableTagName)).Associations ?? [];
 
         if(subnetTagName) {
-            const subnetId = "23123123123213";  // TODO: get subnet id from tagname
+            const subnetId = await this.subnetManager.subnetId(subnetTagName);
             associations = associations.filter(ass => ass.SubnetId == subnetId);
         }
         
@@ -98,6 +116,30 @@ export class AwsRouteTableManager implements IRouteTableManager {
     }
 
     /**
+     * Checks if the specified RouteTable and Subnet have an active association
+     * 
+     * @param routeTableTagName 
+     * @param subnetTagName 
+     * @returns true if the RouteTable is associated with the Subnet
+     */
+    public async isAssociatedWithSubnet(routeTableTagName: string, subnetTagName: string) : Promise<boolean> {
+        if(!await this.routeTableId(routeTableTagName)) 
+            return false; 
+
+        if(!await this.subnetManager.subnetId(subnetTagName)) 
+            return false;
+
+        let associations : EC2Client.RouteTableAssociationList 
+            = await (await this.getRouteTable(routeTableTagName)).Associations ?? [];
+
+        const subnetId = await this.subnetManager.subnetId(subnetTagName);
+        associations = associations.filter(ass => ass.SubnetId == subnetId);
+
+        return associations.length > 0;
+    }
+
+    /**
+     * Dissociates the specified RouteTable from all of its associations with SubNets
      * 
      * @param routeTableTagName The TagName of the RouteTable the Subnet has the association we want removed
      */
@@ -153,8 +195,18 @@ export class RouteTableNameAlreadyExistsError extends Error {
         super(`The RouteTable with the tagName: ${routeTableTagName} already exists`);
     }
 }
+export class RouteTableDoesNotExistError extends Error {
+    constructor(routeTableTagName: string) {
+      super(`The RouteTable with the tagName: ${routeTableTagName} does not exists`);
+    }
+  }
 export class CannotDeleteMainRouteTableError extends Error {
     constructor(routeTableTagName: string) {
         super(`Cannot delete the RouteTable with the tagName: ${routeTableTagName} because it is the main RouteTable of a Vpc`);
+    }
+}
+export class RouteTableAssociationAlreadyExistsError extends Error {
+    constructor(routeTableTagName: string, associateTagName: string) {
+        super(`RouteTable ${routeTableTagName} is already associated with ${associateTagName}`);
     }
 }
