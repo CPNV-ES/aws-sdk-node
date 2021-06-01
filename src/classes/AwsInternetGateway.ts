@@ -1,13 +1,15 @@
 import EC2Client from "aws-sdk/clients/ec2";
 import { IInternetGateway } from "src/interfaces/IInternetGateway";
-import { AwsVpcManager } from "./AwsVpcManager";
+import { AwsVpcManager, VpcDoesNotExistError } from "./AwsVpcManager";
 import { config } from "../config";
 
 export class AwsInternetGateway implements IInternetGateway {
     private client: EC2Client;
+    private region: string;
 
     constructor(awsRegionEndpoint: string) {
         this.client = new EC2Client({ region: awsRegionEndpoint });
+        this.region = awsRegionEndpoint;
     }
 
     public async createInternetGateway(igwTagName: string): Promise<void> {
@@ -43,9 +45,9 @@ export class AwsInternetGateway implements IInternetGateway {
 
     public async attachInternetGateway(igwTagName: string, vpcTagName: string): Promise<boolean> {
         let InternetGatewayId: string;
-        let vpcId: string;
+        let vpcId: string | null;
 
-        const aws = new AwsVpcManager("", config.AWS_REGION);
+        const aws = new AwsVpcManager(this.region);
         const exists = await aws.exists(vpcTagName);
 
         if (!exists) {
@@ -60,15 +62,20 @@ export class AwsInternetGateway implements IInternetGateway {
 
             return false;
         }
+
+        if(!vpcId) {
+            throw new VpcDoesNotExistError(vpcTagName);
+        }
+
         await this.client.attachInternetGateway({ InternetGatewayId: InternetGatewayId, VpcId: vpcId }).promise();
         return true;
     }
 
     public async detachInternetGateway(igwTagName: string, vpcTagName: string): Promise<boolean> {
         let InternetGatewayId: string;
-        let vpcId: string;
+        let vpcId: string | null;
 
-        const aws = new AwsVpcManager("", config.AWS_REGION);
+        const aws = new AwsVpcManager(this.region);
 
         try {
             InternetGatewayId = await this.igwId(igwTagName);
@@ -77,6 +84,11 @@ export class AwsInternetGateway implements IInternetGateway {
             console.error(e);
             return false;
         }
+
+        if(!vpcId) {
+            throw new VpcDoesNotExistError(vpcTagName);
+        }
+
         await this.client.detachInternetGateway({ InternetGatewayId: InternetGatewayId, VpcId: vpcId }).promise();
         return true;
     }
@@ -92,7 +104,7 @@ export class AwsInternetGateway implements IInternetGateway {
         return true;
     }
 
-    private async igwId(igwTagName: string): Promise<string> {
+    public async igwId(igwTagName: string): Promise<string> {
         const { InternetGateways }: EC2Client.DescribeInternetGatewaysResult = await this.client.describeInternetGateways({
             Filters: [
                 {

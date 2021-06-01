@@ -4,7 +4,6 @@ import { config } from "../config";
 const regionEndpint = config.AWS_REGION;
 const igwTagName = "IGW_test";
 const vpcTagName = "VPC_test";
-const profileName = "";
 const cidrBlock = "10.0.0.0/16";
 
 let internetGateway: AwsInternetGateway;
@@ -12,7 +11,7 @@ let vpcManager: AwsVpcManager;
 
 beforeEach(() => {
     internetGateway = new AwsInternetGateway(regionEndpint);
-    vpcManager = new AwsVpcManager(profileName, regionEndpint);
+    vpcManager = new AwsVpcManager(regionEndpint);
 
     jest.setTimeout(60000);
 });

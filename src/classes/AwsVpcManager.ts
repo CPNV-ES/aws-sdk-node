@@ -97,3 +97,10 @@ export class VpcNameAlreadyExistsError extends Error {
     super(`The Vpc with the tagName: ${vpcTagName} already exists`);
   }
 }
+
+export class VpcDoesNotExistError extends Error {
+  constructor(vpcTagName: string) {
+    super(`The Vpc with the tagName: ${vpcTagName} does not exists`);
+  }
+}
+

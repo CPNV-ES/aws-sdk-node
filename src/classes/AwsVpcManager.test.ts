@@ -5,16 +5,12 @@ const vpcTagName = process.env.VPC_TAG_NAME ?? "";
 const cidrBlock = process.env.VPC_CIDR_BLOCK ?? "";
 const vpcManager = new AwsVpcManager(regionEndpoint);
 
-
-let vpcManager: AwsVpcManager;
-
 beforeAll(async () => {
   // This ensures that we start the tests without any pre-existing VPC.
   // The tests would fail if we did not perform this action.
   if (await vpcManager.exists(vpcTagName)) {
     await vpcManager.deleteVpc(vpcTagName);
   }
-
 });
 
 afterEach(async () => {

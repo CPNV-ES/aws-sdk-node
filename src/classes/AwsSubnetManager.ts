@@ -1,6 +1,6 @@
 import EC2Client from "aws-sdk/clients/ec2";
 import { ISubnetManager } from "src/interfaces/ISubnetManager";
-import { AwsVpcManager } from "./AwsVpcManager";
+import { AwsVpcManager, VpcDoesNotExistError } from "./AwsVpcManager";
 
 export class AwsSubnetManager implements ISubnetManager {
   private client: EC2Client;
@@ -88,7 +88,7 @@ export class AwsSubnetManager implements ISubnetManager {
    * @return {Promise<string | null>}
    * @memberof AwsVpcManager
    */
-  private async subnetId(subnetTagName: string): Promise<string | null> {
+  public async subnetId(subnetTagName: string): Promise<string | null> {
     const { Subnets }: EC2Client.DescribeSubnetsResult = await this.client
       .describeSubnets({
         Filters: [
@@ -114,9 +114,9 @@ export class SubnetNameAlreadyExistsError extends Error {
   }
 }
 
-export class VpcDoesNotExistError extends Error {
-  constructor(vpcTagName: string) {
-    super(`The Vpc with the tagName: ${vpcTagName} does not exists`);
+export class SubnetDoesNotExistError extends Error {
+  constructor(subnetTagName: string) {
+    super(`The Subnet with the tagName: ${subnetTagName} does not exists`);
   }
 }
 
