@@ -9,7 +9,8 @@
     "build": "tsc",
     "clean": "rm -rf dist build",
     "start": "node ./dist/main.js",
-    "docs": "typedoc"
+    "docs": "typedoc --out docs/typedoc",
+    "docs:diagram": "mkdir -p docs/diagrams && tplant --input src/classes/index.ts --output docs/diagrams/class.puml"
   },
   "author": "",
   "license": "MIT",
@@ -20,6 +21,7 @@
     "@typescript-eslint/parser": "^4.22.0",
     "eslint": "^7.25.0",
     "jest": "^26.6.3",
+    "tplant": "^2.3.6",
     "ts-jest": "^26.5.5",
     "ts-node": "^9.1.1",
     "typedoc": "^0.20.36",
