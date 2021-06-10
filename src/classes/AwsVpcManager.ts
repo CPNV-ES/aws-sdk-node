@@ -1,3 +1,4 @@
+import AWS from "aws-sdk/global";
 import EC2Client from "aws-sdk/clients/ec2";
 import { IVpcManager } from "src/interfaces/IVpcManager";
 
@@ -5,11 +6,18 @@ export class AwsVpcManager implements IVpcManager {
   private client: EC2Client;
 
   /**
-   * @param {string} awsRegionEndpoint e.g. ap-southeast-2
+   * @param    {string} profileName refers to the local credentials file
+   * @param    {string} awsRegionEndpoint e.g. ap-southeast-2
    * @memberof AwsVpcManager
+   * @link     https://docs.amazonaws.cn/en_us/sdk-for-javascript/v3/developer-guide/loading-node-credentials-shared.html
    */
-  constructor(awsRegionEndpoint: string) {
-    this.client = new EC2Client({ region: awsRegionEndpoint });
+  constructor(profileName : string, awsRegionEndpoint: string) {
+    const credentials = new AWS.SharedIniFileCredentials({profile: 'VIR1_INFRA_DEPLOYMENT'});
+    AWS.config.credentials = credentials;
+
+    this.client = new EC2Client({
+          region : awsRegionEndpoint
+    });
   }
 
   /**

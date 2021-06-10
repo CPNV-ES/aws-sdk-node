@@ -1,9 +1,10 @@
 import { AwsVpcManager } from "./AwsVpcManager";
 
-const regionEndpoint = process.env.AWS_REGION ?? "";
-const vpcTagName = process.env.VPC_TAG_NAME ?? "";
-const cidrBlock = process.env.VPC_CIDR_BLOCK ?? "";
-const vpcManager = new AwsVpcManager(regionEndpoint);
+const profileName = "VIR1_INFRA_DEPLOYMENT";
+const regionEndPoint = "ap-south-1";
+const vpcTagName = "VIR1_VPC_AWS_NODE_UNITTEST_VPC";;
+const cidrBlock = "10.0.0.0/16";;
+const vpcManager = new AwsVpcManager(profileName, regionEndPoint);
 
 beforeAll(async () => {
   // This ensures that we start the tests without any pre-existing VPC.
