@@ -12,7 +12,7 @@ export class AwsVpcManager implements IVpcManager {
    * @link     https://docs.amazonaws.cn/en_us/sdk-for-javascript/v3/developer-guide/loading-node-credentials-shared.html
    */
   constructor(profileName : string, awsRegionEndpoint: string) {
-    const credentials = new AWS.SharedIniFileCredentials({profile: 'VIR1_INFRA_DEPLOYMENT'});
+    const credentials = new AWS.SharedIniFileCredentials({profile: profileName});
     AWS.config.credentials = credentials;
 
     this.client = new EC2Client({
