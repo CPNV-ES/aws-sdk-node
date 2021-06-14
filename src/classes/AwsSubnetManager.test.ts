@@ -14,12 +14,14 @@ beforeAll(async () => {
     await vpcManager.createVpc(vpcTagname, cidrBlock);
   }
 
+  //TODO repetition with after each... who already delete the subnet if exist after each test
   if (await subnetManager.exists(subnetTagname)) {
     await subnetManager.deleteSubnet(subnetTagname);
   }
 });
 
 afterAll(async () => {
+  //TODO repetition with beforeAll.... who already delete the vpc if exist
   if (await vpcManager.exists(vpcTagname)) {
     await vpcManager.deleteVpc(vpcTagname);
   }

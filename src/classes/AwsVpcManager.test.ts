@@ -49,6 +49,7 @@ describe("AwsVpcManager unit tests", () => {
   });
 });
 
+//TODO NGY - To remove
 describe("AwsVpcManager integration tests", () => {
   test("Scenari nominal case success", async () => {
     await vpcManager.createVpc(vpcTagName, cidrBlock);

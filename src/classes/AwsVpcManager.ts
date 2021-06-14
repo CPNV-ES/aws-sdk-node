@@ -40,6 +40,7 @@ export class AwsVpcManager implements IVpcManager {
         TagSpecifications: [
           {
             ResourceType: "vpc",
+            //TODO 
             Tags: [{ Key: "Name", Value: vpcTagName }],
           },
         ],

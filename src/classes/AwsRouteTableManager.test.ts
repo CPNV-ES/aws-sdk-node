@@ -1,6 +1,6 @@
 import { AwsRouteTableManager, RouteTableAssociationAlreadyExistsError} from "./AwsRouteTableManager";
 import { AwsVpcManager} from "./AwsVpcManager";
-import { AwsSubnetManager } from './AwsSubnetManager';
+import {AwsSubnetManager, CidrBlockImpossible} from './AwsSubnetManager';
 import { AwsInternetGateway } from './AwsInternetGateway';
 import { config } from "../config";
 
@@ -25,6 +25,7 @@ beforeAll(async () => {
   igwManager = new AwsInternetGateway(regionEndpint);
   routeTableManager = new AwsRouteTableManager(profileName, regionEndpint, vpcManager, subnetManager, igwManager);
 
+  //TODO beforeAll and afterAll have to be simplify. Either beforeAll to the action or after. But not both.
   if (await subnetManager.exists(subnetTagName)) {
     await subnetManager.deleteSubnet(subnetTagName);
   }
@@ -96,7 +97,8 @@ describe("AwsRouteTable unit tests", () => {
     await routeTableManager.createRouteTable(routeTableTagName, vpcTagName);
 
     // as described here : https://stackoverflow.com/a/47887098/10596952
-    await expect(routeTableManager.createRouteTable(routeTableTagName, vpcTagName)).rejects.toThrow();
+    // TODO add type of error in test - https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/try...catch
+    await expect(routeTableManager.createRouteTable(routeTableTagName, vpcTagName)).rejects.toThrow(RouteTableAssociationAlreadyExistsError);
   });
 
   test("Delete RouteTable nominal case success", async () => {
@@ -146,6 +148,7 @@ describe("AwsRouteTable unit tests", () => {
   test("RouteTable needs to be in the same network as IGW to create route", async () => {
     await routeTableManager.createRouteTable(routeTableTagName, vpcTagName);
 
+    // TODO add type of error in test - https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/try...catch
     await expect(
       routeTableManager.addRouteToIGW(routeTableTagName, diffNetworkIgwTagName, routeCirdBlock)
     ).rejects.toThrow();
