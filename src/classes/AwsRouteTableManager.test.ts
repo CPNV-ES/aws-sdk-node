@@ -115,7 +115,7 @@ describe("AwsRouteTable unit tests", () => {
     expect(await routeTableManager.exists(routeTableTagName)).toBeTruthy();
   });
 
-  test("Associate RouteTable with Subnet nomnial case success", async () => {
+  test("Associate RouteTable with Subnet nominal case success", async () => {
     await routeTableManager.createRouteTable(routeTableTagName, vpcTagName);
     await routeTableManager.associateWithSubnet(routeTableTagName, subnetTagName);
 

@@ -12,6 +12,7 @@ export class AwsVpcManager implements IVpcManager {
    * @link     https://docs.amazonaws.cn/en_us/sdk-for-javascript/v3/developer-guide/loading-node-credentials-shared.html
    */
   constructor(profileName : string, awsRegionEndpoint: string) {
+    //TODO add share credentials logic
     const credentials = new AWS.SharedIniFileCredentials({profile: profileName});
     AWS.config.credentials = credentials;
 
@@ -34,6 +35,7 @@ export class AwsVpcManager implements IVpcManager {
       throw new VpcNameAlreadyExistsError(vpcTagName);
     }
 
+    //TODO why not using a method to add tag https://docs.aws.amazon.com/sdkfornet/v3/apidocs/items/EC2/MEC2CreateTagsCreateTagsRequest.html
     await this.client
       .createVpc({
         CidrBlock: cidrBlock,

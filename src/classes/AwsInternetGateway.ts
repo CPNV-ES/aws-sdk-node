@@ -16,6 +16,7 @@ export class AwsInternetGateway implements IInternetGateway {
         const exists = await this.existInternetGateway(igwTagName);
 
         if (exists) {
+            //TODO this error must be typed (extension of error class)
             throw new Error(`There is already a Igw with the tag Name ${igwTagName}`);
         }
 
@@ -34,13 +35,11 @@ export class AwsInternetGateway implements IInternetGateway {
 
         try {
             InternetGatewayId = await this.igwId(igwTagName);
+            await this.client.deleteInternetGateway({ InternetGatewayId: InternetGatewayId }).promise();
         } catch (e) {
             console.error(e);
-
             return;
         }
-
-        await this.client.deleteInternetGateway({ InternetGatewayId: InternetGatewayId }).promise();
     }
 
     public async attachInternetGateway(igwTagName: string, vpcTagName: string): Promise<boolean> {
@@ -51,6 +50,7 @@ export class AwsInternetGateway implements IInternetGateway {
         const exists = await aws.exists(vpcTagName);
 
         if (!exists) {
+            //TODO type this error
             throw new Error(`There is already a Vpc with the tag Name ${vpcTagName}`);
         }
 
@@ -60,6 +60,7 @@ export class AwsInternetGateway implements IInternetGateway {
         } catch (e) {
             console.error(e);
 
+            //TODO remove this boolean return
             return false;
         }
 
@@ -68,6 +69,7 @@ export class AwsInternetGateway implements IInternetGateway {
         }
 
         await this.client.attachInternetGateway({ InternetGatewayId: InternetGatewayId, VpcId: vpcId }).promise();
+        //TODO remove this boolean return. Either it's ok, or we throw an exception
         return true;
     }
 
@@ -82,6 +84,7 @@ export class AwsInternetGateway implements IInternetGateway {
             vpcId = await aws.vpcId(vpcTagName);
         } catch (e) {
             console.error(e);
+            //TODO remove this boolean return. Either it's ok, or we throw an exception
             return false;
         }
 
@@ -90,6 +93,7 @@ export class AwsInternetGateway implements IInternetGateway {
         }
 
         await this.client.detachInternetGateway({ InternetGatewayId: InternetGatewayId, VpcId: vpcId }).promise();
+        //TODO remove this boolean return. Either it's ok, or we throw an exception
         return true;
     }
 

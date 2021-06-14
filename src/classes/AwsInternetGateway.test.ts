@@ -53,6 +53,7 @@ describe("InternetGateWay integration tests", () => {
         await internetGateway.createInternetGateway(igwTagName);
         await vpcManager.createVpc(vpcTagName, cidrBlock);
 
+        //TODO we test the igw'status to check if it's attached. Forget boolean return.
         expect(await internetGateway.attachInternetGateway(igwTagName, vpcTagName)).toBeTruthy();
         expect(await internetGateway.detachInternetGateway(igwTagName, vpcTagName)).toBeTruthy();
 
