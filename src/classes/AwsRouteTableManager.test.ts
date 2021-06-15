@@ -1,6 +1,6 @@
 import { AwsRouteTableManager, RouteTableAssociationAlreadyExistsError} from "./AwsRouteTableManager";
 import { AwsVpcManager} from "./AwsVpcManager";
-import { AwsSubnetManager } from './AwsSubnetManager';
+import { AwsSubnetManager, CidrBlockImpossible } from './AwsSubnetManager';
 import { AwsInternetGateway } from './AwsInternetGateway';
 import { config } from "../config";
 
@@ -19,46 +19,7 @@ let subnetManager: AwsSubnetManager;
 let routeTableManager: AwsRouteTableManager;
 let igwManager: AwsInternetGateway;
 
-beforeAll(async () => {
-  vpcManager = new AwsVpcManager(regionEndpint);
-  subnetManager = new AwsSubnetManager(regionEndpint, vpcManager);
-  igwManager = new AwsInternetGateway(regionEndpint);
-  routeTableManager = new AwsRouteTableManager(profileName, regionEndpint, vpcManager, subnetManager, igwManager);
-
-  if (await subnetManager.exists(subnetTagName)) {
-    await subnetManager.deleteSubnet(subnetTagName);
-  }
-
-  if (await routeTableManager.exists(routeTableTagName)) {
-    await routeTableManager.deleteRouteTable(routeTableTagName);
-  }
-  
-  if (await vpcManager.exists(vpcTagName)) {
-    await vpcManager.deleteVpc(vpcTagName);
-  }
-
-  await vpcManager.createVpc(vpcTagName, vpcCidrBlock);
-  await subnetManager.createSubnet(subnetTagName, vpcTagName, vpcCidrBlock);
-  await igwManager.createInternetGateway(igwTagName);
-  await igwManager.attachInternetGateway(igwTagName, vpcTagName);
-  await igwManager.createInternetGateway(diffNetworkIgwTagName);  // this igw is not attached to any network
-});
-
-afterEach(async () => {
-  if (await routeTableManager.isAssociatedWithSubnet(routeTableTagName, subnetTagName)) {
-    await routeTableManager.dissociateFromSubnet(routeTableTagName, subnetTagName);
-  }
-
-  if (await routeTableManager.hasRoute(routeTableTagName, routeCirdBlock)) {
-    await routeTableManager.deleteRoute(routeTableTagName, routeCirdBlock);
-  }
-
-  if (await routeTableManager.exists(routeTableTagName)) {
-    await routeTableManager.deleteRouteTable(routeTableTagName);
-  }
-});
-
-afterAll(async () => {
+const cleanup = async () => {
   if (await routeTableManager.isAssociatedWithSubnet(routeTableTagName, subnetTagName)) {
     await routeTableManager.dissociateFromSubnet(routeTableTagName, subnetTagName);
   }
@@ -83,6 +44,39 @@ afterAll(async () => {
   if (await vpcManager.exists(vpcTagName)) {
     await vpcManager.deleteVpc(vpcTagName);
   }
+}
+
+beforeAll(async () => {
+  vpcManager = new AwsVpcManager(regionEndpint);
+  subnetManager = new AwsSubnetManager(regionEndpint, vpcManager);
+  igwManager = new AwsInternetGateway(regionEndpint);
+  routeTableManager = new AwsRouteTableManager(profileName, regionEndpint, vpcManager, subnetManager, igwManager);
+
+  await cleanup();
+
+  await vpcManager.createVpc(vpcTagName, vpcCidrBlock);
+  await subnetManager.createSubnet(subnetTagName, vpcTagName, vpcCidrBlock);
+  await igwManager.createInternetGateway(igwTagName);
+  await igwManager.attachInternetGateway(igwTagName, vpcTagName);
+  await igwManager.createInternetGateway(diffNetworkIgwTagName);  // this igw is not attached to any network
+});
+
+afterEach(async () => {
+  if (await routeTableManager.isAssociatedWithSubnet(routeTableTagName, subnetTagName)) {
+    await routeTableManager.dissociateFromSubnet(routeTableTagName, subnetTagName);
+  }
+
+  if (await routeTableManager.hasRoute(routeTableTagName, routeCirdBlock)) {
+    await routeTableManager.deleteRoute(routeTableTagName, routeCirdBlock);
+  }
+
+  if (await routeTableManager.exists(routeTableTagName)) {
+    await routeTableManager.deleteRouteTable(routeTableTagName);
+  }
+});
+
+afterAll(async () => {
+  await cleanup();
 });
 
 describe("AwsRouteTable unit tests", () => {
