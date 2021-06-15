@@ -14,35 +14,35 @@ const routeTableManager = new AwsRouteTableManager(client, vpcManager, subnetMan
 const vpcTagName = "integration-vpc";
 const vpcCidrBlock = "10.0.0.0/16";
 const privateSubnetTagName = "integration-private_subnet";
-const privateSubnetCidrBlock = "10.0.0.0/24";
+const privateSubnetCidrBlock = "10.0.1.0/24";
 const publicSubnetTagName = "integration-public_subnet";
-const publicSubnetCidrBlock = "10.0.1.0/24";
+const publicSubnetCidrBlock = "10.0.0.0/24";
 const internetGatewayTagName = "integration-internet_gateway";
 const customRouteTableTagName = "integartion-custom_route_table";
 
 const cleanup = async () => {
-    // Dissociate custom route table from all subnets
-    await routeTableManager.dissociateFromAllSubnets(customRouteTableTagName);
-    // Delete custom route table
-    await routeTableManager.deleteRouteTable(customRouteTableTagName);
+  // Dissociate custom route table from all subnets
+  await routeTableManager.dissociateFromAllSubnets(customRouteTableTagName);
+  // Delete custom route table
+  await routeTableManager.deleteRouteTable(customRouteTableTagName);
 
-    // Detach internet gateway from the VPC
-    if(await internetGatewayManager.existInternetGateway(internetGatewayTagName) && await vpcManager.exists(vpcTagName)) {
-        await internetGatewayManager.detachInternetGateway(internetGatewayTagName, vpcTagName);
-    }
-    
-    // Delete internet gateway
-    await internetGatewayManager.deleteInternetGateway(internetGatewayTagName);
+  // Detach internet gateway from the VPC
+  await internetGatewayManager.detachInternetGateway(
+    internetGatewayTagName,
+    vpcTagName
+  );
+  // Delete internet gateway
+  await internetGatewayManager.deleteInternetGateway(internetGatewayTagName);
 
-    // Delete private subnet
-    await subnetManager.deleteSubnet(privateSubnetTagName);
+  // Delete private subnet
+  await subnetManager.deleteSubnet(privateSubnetTagName);
 
-    // Delete public subnet
-    await subnetManager.deleteSubnet(publicSubnetTagName);
+  // Delete public subnet
+  await subnetManager.deleteSubnet(publicSubnetTagName);
 
-    // Delete VPC
-    await vpcManager.deleteVpc(vpcTagName);
-}
+  // Delete VPC
+  await vpcManager.deleteVpc(vpcTagName);
+};
 
 beforeAll(async () => {
     await cleanup();

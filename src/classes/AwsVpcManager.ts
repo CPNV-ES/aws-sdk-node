@@ -16,7 +16,7 @@ export class AwsVpcManager implements IVpcManager {
   /**
    * @param {string} vpcTagName e.g. VIR1NODE
    * @param {string} cidrBlock e.g. 10.0.0.0/16
-   * @throws if a VPC with the same vpcTagName already exists
+   * @throws {VpcNameAlreadyExistsError} if a VPC with the same vpcTagName already exists
    * @return {Promise<void>}
    * @memberof AwsVpcManager
    */
