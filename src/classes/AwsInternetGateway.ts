@@ -1,6 +1,6 @@
 import EC2Client from "aws-sdk/clients/ec2";
 import { IInternetGateway } from "src/interfaces/IInternetGateway";
-import { AwsVpcManager, VpcDoesNotExistError } from "./AwsVpcManager";
+import { AwsVpcManager, VpcDoesNotExistError, VpcNameAlreadyExistsError } from "./AwsVpcManager";
 import { config } from "../config";
 
 export class AwsInternetGateway implements IInternetGateway {
@@ -16,7 +16,7 @@ export class AwsInternetGateway implements IInternetGateway {
         const exists = await this.existInternetGateway(igwTagName);
 
         if (exists) {
-            throw new Error(`There is already a Igw with the tag Name ${igwTagName}`);
+            throw new InternetGatewayAlreadyExists(igwTagName);
         }
 
         await this.client.createInternetGateway({
@@ -51,7 +51,7 @@ export class AwsInternetGateway implements IInternetGateway {
         const exists = await aws.exists(vpcTagName);
 
         if (!exists) {
-            throw new Error(`There is already a Vpc with the tag Name ${vpcTagName}`);
+            throw new VpcNameAlreadyExistsError(vpcTagName);
         }
 
         try {
@@ -114,18 +114,22 @@ export class AwsInternetGateway implements IInternetGateway {
             ]
         }).promise();
 
-        if (!InternetGateways) {
-            throw new Error(`The Igw with the tagName: ${igwTagName} does not exist`);
-        }
-
-        if (!InternetGateways[0]) {
-            throw new Error(`The Igw's index of ${igwTagName} is null`);
-        }
-
-        if (!InternetGateways[0].InternetGatewayId) {
-            throw new Error(`The Igw with the tagName: ${igwTagName} does not have a IgwId`);
+        if (!InternetGateways || !InternetGateways[0] || !InternetGateways[0].InternetGatewayId) {
+            throw new InternetGatewayDoesntExists(igwTagName);
         }
 
         return InternetGateways[0].InternetGatewayId;
+    }
+}
+
+export class InternetGatewayAlreadyExists extends Error {
+    constructor(igwTagName: string) {
+        super(`The InternetGateway with the tagName: ${igwTagName} already exists`);
+    }
+}
+
+export class InternetGatewayDoesntExists extends Error {
+    constructor(igwTagName: string) {
+        super(`The InternetGateway with the tagName: ${igwTagName} doesnt exists`);
     }
 }
