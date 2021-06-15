@@ -15,8 +15,8 @@ export class AwsRouteTableManager implements IRouteTableManager {
     * @param {string} awsRegionEndpoint e.g. ap-southeast-2
     * @memberof AwsRouteTableManager
     */
-    constructor(awsProfileName: string, awsRegionEndpoint: string, vpcManager: AwsVpcManager, subnetManager: AwsSubnetManager, igwManager: AwsInternetGateway) {
-       this.client = new EC2Client({ region: awsRegionEndpoint });
+    constructor(client: EC2Client, vpcManager: AwsVpcManager, subnetManager: AwsSubnetManager, igwManager: AwsInternetGateway) {
+       this.client = client;
        this.vpcManager = vpcManager;
        this.subnetManager = subnetManager;
        this.internetGatewayManager = igwManager;

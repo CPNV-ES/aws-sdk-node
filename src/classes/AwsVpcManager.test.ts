@@ -1,9 +1,10 @@
 import { AwsVpcManager } from "./AwsVpcManager";
+import EC2Client from "aws-sdk/clients/ec2";
 
-const regionEndpoint = process.env.AWS_REGION ?? "";
+const client = new EC2Client({ region: process.env.AWS_REGION });
 const vpcTagName = process.env.VPC_TAG_NAME ?? "";
 const cidrBlock = process.env.VPC_CIDR_BLOCK ?? "";
-const vpcManager = new AwsVpcManager(regionEndpoint);
+const vpcManager = new AwsVpcManager(client);
 
 beforeAll(async () => {
   // This ensures that we start the tests without any pre-existing VPC.

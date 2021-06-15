@@ -9,8 +9,8 @@ export class AwsVpcManager implements IVpcManager {
    * @param {string} awsRegionEndpoint e.g. ap-southeast-2
    * @memberof AwsVpcManager
    */
-  constructor(awsRegionEndpoint: string) {
-    this.client = new EC2Client({ region: awsRegionEndpoint });
+  constructor(client: EC2Client) {
+    this.client = client;
   }
 
   /**

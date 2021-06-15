@@ -2,10 +2,9 @@ import { AwsRouteTableManager, RouteTableAssociationAlreadyExistsError} from "./
 import { AwsVpcManager} from "./AwsVpcManager";
 import { AwsSubnetManager, CidrBlockImpossible } from './AwsSubnetManager';
 import { AwsInternetGateway } from './AwsInternetGateway';
-import { config } from "../config";
+import EC2Client from "aws-sdk/clients/ec2";
 
-const profileName = "";
-const regionEndpint = config.AWS_REGION;
+const client = new EC2Client({ region: process.env.AWS_REGION });
 const routeTableTagName = "RTB-pub-VIR1NODE-test";
 const subnetTagName = "SUB-routeTableTests";
 const vpcTagName = "VIR1NODE-routeTableTests";
@@ -47,10 +46,10 @@ const cleanup = async () => {
 }
 
 beforeAll(async () => {
-  vpcManager = new AwsVpcManager(regionEndpint);
-  subnetManager = new AwsSubnetManager(regionEndpint, vpcManager);
-  igwManager = new AwsInternetGateway(regionEndpint);
-  routeTableManager = new AwsRouteTableManager(profileName, regionEndpint, vpcManager, subnetManager, igwManager);
+  vpcManager = new AwsVpcManager(client);
+  subnetManager = new AwsSubnetManager(client, vpcManager);
+  igwManager = new AwsInternetGateway(client);
+  routeTableManager = new AwsRouteTableManager(client, vpcManager, subnetManager, igwManager);
 
   await cleanup();
 

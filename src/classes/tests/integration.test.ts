@@ -2,12 +2,14 @@ import { AwsVpcManager } from "../AwsVpcManager";
 import { AwsInternetGateway } from "../AwsInternetGateway";
 import { AwsRouteTableManager } from "../AwsRouteTableManager";
 import { AwsSubnetManager } from "../AwsSubnetManager";
-import { config } from "../../config";
+import EC2Client from "aws-sdk/clients/ec2";
 
-const vpcManager = new AwsVpcManager(config.AWS_REGION);
-const internetGatewayManager = new AwsInternetGateway(config.AWS_REGION);
-const subnetManager = new AwsSubnetManager(config.AWS_REGION, vpcManager);
-const routeTableManager = new AwsRouteTableManager("", config.AWS_REGION, vpcManager, subnetManager, internetGatewayManager);
+const client = new EC2Client({ region: process.env.AWS_REGION });
+
+const vpcManager = new AwsVpcManager(client);
+const internetGatewayManager = new AwsInternetGateway(client);
+const subnetManager = new AwsSubnetManager(client, vpcManager);
+const routeTableManager = new AwsRouteTableManager(client, vpcManager, subnetManager, internetGatewayManager);
 
 const vpcTagName = "integration-vpc";
 const vpcCidrBlock = "10.0.0.0/16";
@@ -25,7 +27,10 @@ const cleanup = async () => {
     await routeTableManager.deleteRouteTable(customRouteTableTagName);
 
     // Detach internet gateway from the VPC
-    await internetGatewayManager.detachInternetGateway(internetGatewayTagName, vpcTagName);
+    if(await internetGatewayManager.existInternetGateway(internetGatewayTagName) && await vpcManager.exists(vpcTagName)) {
+        await internetGatewayManager.detachInternetGateway(internetGatewayTagName, vpcTagName);
+    }
+    
     // Delete internet gateway
     await internetGatewayManager.deleteInternetGateway(internetGatewayTagName);
 
@@ -67,7 +72,8 @@ describe("Aws infrastructure integration test", () => {
         await internetGatewayManager.createInternetGateway(internetGatewayTagName);
         expect(await internetGatewayManager.existInternetGateway(internetGatewayTagName)).toBeTruthy();
         // Attach to internet gateway to the VPC
-        expect(await internetGatewayManager.attachInternetGateway(internetGatewayTagName, vpcTagName)).toBeTruthy();
+        await internetGatewayManager.attachInternetGateway(internetGatewayTagName, vpcTagName);
+        expect(await internetGatewayManager.isInternetGatewayAttached(internetGatewayTagName, vpcTagName)).toBeTruthy();
         
         // Create custom route table
         await routeTableManager.createRouteTable(customRouteTableTagName, vpcTagName);
@@ -91,7 +97,9 @@ describe("Aws infrastructure integration test", () => {
         expect(await routeTableManager.exists(customRouteTableTagName)).toBeFalsy();
 
         // Detach internet gateway from the VPC
-        expect(await internetGatewayManager.detachInternetGateway(internetGatewayTagName, vpcTagName)).toBeTruthy();
+        await internetGatewayManager.detachInternetGateway(internetGatewayTagName, vpcTagName);
+        expect(await internetGatewayManager.isInternetGatewayAttached(internetGatewayTagName, vpcTagName)).toBeFalsy();
+
         // Delete internet gateway
         await internetGatewayManager.deleteInternetGateway(internetGatewayTagName);
         expect(await internetGatewayManager.existInternetGateway(internetGatewayTagName)).toBeFalsy();

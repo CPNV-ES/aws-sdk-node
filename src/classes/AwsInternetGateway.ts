@@ -1,15 +1,12 @@
 import EC2Client from "aws-sdk/clients/ec2";
 import { IInternetGateway } from "src/interfaces/IInternetGateway";
 import { AwsVpcManager, VpcDoesNotExistError, VpcNameAlreadyExistsError, VpcIsNotReadyError  } from "./AwsVpcManager";
-import { config } from "../config";
 
 export class AwsInternetGateway implements IInternetGateway {
     private client: EC2Client;
-    private region: string;
 
-    constructor(awsRegionEndpoint: string) {
-        this.client = new EC2Client({ region: awsRegionEndpoint });
-        this.region = awsRegionEndpoint;
+    constructor(client: EC2Client) {
+        this.client = client;
     }
 
     public async createInternetGateway(igwTagName: string): Promise<void> {
@@ -46,7 +43,7 @@ export class AwsInternetGateway implements IInternetGateway {
         let InternetGatewayId: string;
         let vpcId: string | null;
 
-        const aws = new AwsVpcManager(this.region);
+        const aws = new AwsVpcManager(this.client);
         const exists = await aws.exists(vpcTagName);
 
         if (!exists) {
@@ -77,7 +74,10 @@ export class AwsInternetGateway implements IInternetGateway {
         let InternetGatewayId: string;
         let vpcId: string | null;
 
-        const aws = new AwsVpcManager(this.region);
+        const aws = new AwsVpcManager(this.client);
+
+        if(!await this.isInternetGatewayAttached(igwTagName, vpcTagName))
+            return;
 
         try {
             InternetGatewayId = await this.igwId(igwTagName);
@@ -104,7 +104,7 @@ export class AwsInternetGateway implements IInternetGateway {
             ]
         }).promise();
 
-        const aws = new AwsVpcManager(this.region);
+        const aws = new AwsVpcManager(this.client);
         const vpcId = await aws.vpcId(vpcTgName);
 
         if(!InternetGateways || !InternetGateways[0]) {

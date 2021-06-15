@@ -7,8 +7,8 @@ export class AwsSubnetManager implements ISubnetManager {
 
   private awsVpcManager: AwsVpcManager;
 
-  constructor(awsRegionEndpoint: string, awsVpcManager: AwsVpcManager) {
-    this.client = new EC2Client({ region: awsRegionEndpoint });
+  constructor(client: EC2Client, awsVpcManager: AwsVpcManager) {
+    this.client = client;
     this.awsVpcManager = awsVpcManager;
   }
 
