@@ -34,13 +34,12 @@ export class AwsInternetGateway implements IInternetGateway {
 
         try {
             InternetGatewayId = await this.igwId(igwTagName);
+            await this.client.deleteInternetGateway({ InternetGatewayId: InternetGatewayId }).promise();
         } catch (e) {
             console.error(e);
 
             return;
         }
-
-        await this.client.deleteInternetGateway({ InternetGatewayId: InternetGatewayId }).promise();
     }
 
     public async attachInternetGateway(igwTagName: string, vpcTagName: string): Promise<boolean> {
