@@ -5,7 +5,7 @@ export interface IInternetGateway {
 
     existInternetGateway(igwTagName: string): Promise<boolean>;
 
-    attachInternetGateway(igwTagName: string, vpcTagName: string): Promise<boolean>
+    attachInternetGateway(igwTagName: string, vpcTagName: string): Promise<void>
 
-    detachInternetGateway(igwTagName: string, vpcTagName: string): Promise<boolean>
+    detachInternetGateway(igwTagName: string, vpcTagName: string): Promise<void>
 }

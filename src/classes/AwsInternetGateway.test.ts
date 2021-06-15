@@ -53,8 +53,10 @@ describe("InternetGateWay integration tests", () => {
         await internetGateway.createInternetGateway(igwTagName);
         await vpcManager.createVpc(vpcTagName, cidrBlock);
 
-        expect(await internetGateway.attachInternetGateway(igwTagName, vpcTagName)).toBeTruthy();
-        expect(await internetGateway.detachInternetGateway(igwTagName, vpcTagName)).toBeTruthy();
-
+        await internetGateway.attachInternetGateway(igwTagName, vpcTagName);
+        expect(await internetGateway.isInternetGatewayAttached(igwTagName, vpcTagName)).toBeTruthy();
+        
+        await internetGateway.detachInternetGateway(igwTagName, vpcTagName);
+        expect(await internetGateway.isInternetGatewayAttached(igwTagName, vpcTagName)).toBeFalsy();
     });
 });

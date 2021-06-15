@@ -42,7 +42,7 @@ export class AwsInternetGateway implements IInternetGateway {
         }
     }
 
-    public async attachInternetGateway(igwTagName: string, vpcTagName: string): Promise<boolean> {
+    public async attachInternetGateway(igwTagName: string, vpcTagName: string): Promise<void> {
         let InternetGatewayId: string;
         let vpcId: string | null;
 
@@ -59,7 +59,7 @@ export class AwsInternetGateway implements IInternetGateway {
         } catch (e) {
             console.error(e);
 
-            return false;
+            return;
         }
 
         if(!vpcId) {
@@ -67,10 +67,9 @@ export class AwsInternetGateway implements IInternetGateway {
         }
 
         await this.client.attachInternetGateway({ InternetGatewayId: InternetGatewayId, VpcId: vpcId }).promise();
-        return true;
     }
 
-    public async detachInternetGateway(igwTagName: string, vpcTagName: string): Promise<boolean> {
+    public async detachInternetGateway(igwTagName: string, vpcTagName: string): Promise<void> {
         let InternetGatewayId: string;
         let vpcId: string | null;
 
@@ -81,7 +80,7 @@ export class AwsInternetGateway implements IInternetGateway {
             vpcId = await aws.vpcId(vpcTagName);
         } catch (e) {
             console.error(e);
-            return false;
+            return;
         }
 
         if(!vpcId) {
@@ -89,7 +88,30 @@ export class AwsInternetGateway implements IInternetGateway {
         }
 
         await this.client.detachInternetGateway({ InternetGatewayId: InternetGatewayId, VpcId: vpcId }).promise();
-        return true;
+    }
+
+    public async isInternetGatewayAttached(igwTagName: string, vpcTgName: string) : Promise<boolean> {
+        const { InternetGateways }: EC2Client.DescribeInternetGatewaysResult = await this.client.describeInternetGateways({
+            Filters: [
+                {
+                    Name: "tag:Name",
+                    Values: [igwTagName],
+                }
+            ]
+        }).promise();
+
+        const aws = new AwsVpcManager(this.region);
+        const vpcId = await aws.vpcId(vpcTgName);
+
+        if(!InternetGateways || !InternetGateways[0]) {
+            throw new InternetGatewayDoesntExists(igwTagName);
+        }
+
+        if(!vpcId) {
+            throw new VpcDoesNotExistError(vpcTgName);
+        }
+
+        return InternetGateways[0].Attachments?.some(x => x.VpcId === vpcId) || false;
     }
 
     public async existInternetGateway(igwTagName: string): Promise<boolean> {
