@@ -1,4 +1,4 @@
-import { AwsRouteTableManager, RouteTableAssociationAlreadyExistsError} from "./AwsRouteTableManager";
+import { AwsRouteTableManager, RouteTableAssociationAlreadyExistsError, RouteTableNameAlreadyExistsError} from "./AwsRouteTableManager";
 import { AwsVpcManager} from "./AwsVpcManager";
 import { AwsSubnetManager, CidrBlockImpossible } from './AwsSubnetManager';
 import { AwsInternetGateway } from './AwsInternetGateway';
@@ -89,7 +89,7 @@ describe("AwsRouteTable unit tests", () => {
     await routeTableManager.createRouteTable(routeTableTagName, vpcTagName);
 
     // as described here : https://stackoverflow.com/a/47887098/10596952
-    await expect(routeTableManager.createRouteTable(routeTableTagName, vpcTagName)).rejects.toThrow(RouteTableAssociationAlreadyExistsError);
+    await expect(routeTableManager.createRouteTable(routeTableTagName, vpcTagName)).rejects.toThrow(RouteTableNameAlreadyExistsError);
   });
 
   test("Delete RouteTable nominal case success", async () => {
