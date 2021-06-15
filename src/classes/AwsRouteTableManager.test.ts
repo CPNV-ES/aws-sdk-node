@@ -145,11 +145,3 @@ describe("AwsRouteTable unit tests", () => {
     ).rejects.toThrow("belong to different networks");
   });
 });
-
-describe("AwsRouteTable integration tests", () => {
-  test("Scenari nominal case success", async () => {
-    await routeTableManager.createRouteTable(routeTableTagName, vpcTagName);
-
-    expect(await routeTableManager.exists(routeTableTagName)).toBeTruthy();
-  });
-});
