@@ -1,6 +1,6 @@
 import EC2Client from "aws-sdk/clients/ec2";
 import { IInternetGateway } from "src/interfaces/IInternetGateway";
-import { AwsVpcManager, VpcDoesNotExistError, VpcNameAlreadyExistsError } from "./AwsVpcManager";
+import { AwsVpcManager, VpcDoesNotExistError, VpcNameAlreadyExistsError, VpcIsNotReadyError  } from "./AwsVpcManager";
 import { config } from "../config";
 
 export class AwsInternetGateway implements IInternetGateway {
@@ -51,6 +51,10 @@ export class AwsInternetGateway implements IInternetGateway {
 
         if (!exists) {
             throw new VpcNameAlreadyExistsError(vpcTagName);
+        }
+
+        if(!await aws.isVpcReady(vpcTagName)) {
+            throw new VpcIsNotReadyError(vpcTagName);
         }
 
         try {

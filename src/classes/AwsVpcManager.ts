@@ -1,3 +1,4 @@
+import EC2 from "aws-sdk/clients/ec2";
 import EC2Client from "aws-sdk/clients/ec2";
 import { IVpcManager } from "src/interfaces/IVpcManager";
 
@@ -63,6 +64,25 @@ export class AwsVpcManager implements IVpcManager {
     return !!vpcId;
   }
 
+  public async isVpcReady(vpcTagName: string) : Promise<boolean> {
+    const { Vpcs }: EC2Client.DescribeVpcsResult = await this.client
+      .describeVpcs({
+        Filters: [
+          {
+            Name: "tag:Name",
+            Values: [vpcTagName],
+          },
+        ],
+      })
+      .promise();
+
+    if (!Vpcs || !Vpcs[0] || !Vpcs[0].VpcId) {
+      return false;
+    }
+
+    return Vpcs[0].State === "available";
+  }
+
   /**
    * Get a VPCId by the vpcTagName
    *
@@ -104,3 +124,8 @@ export class VpcDoesNotExistError extends Error {
   }
 }
 
+export class VpcIsNotReadyError extends Error {
+  constructor(vpcTagName: string) {
+    super(`The Vpc with the tagName: ${vpcTagName} is not ready`);
+  }
+}
