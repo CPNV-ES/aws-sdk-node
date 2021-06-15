@@ -90,7 +90,7 @@ describe("AwsRouteTable unit tests", () => {
     await routeTableManager.createRouteTable(routeTableTagName, vpcTagName);
 
     // as described here : https://stackoverflow.com/a/47887098/10596952
-    await expect(routeTableManager.createRouteTable(routeTableTagName, vpcTagName)).rejects.toThrow();
+    await expect(routeTableManager.createRouteTable(routeTableTagName, vpcTagName)).rejects.toThrow(RouteTableAssociationAlreadyExistsError);
   });
 
   test("Delete RouteTable nominal case success", async () => {
@@ -142,7 +142,7 @@ describe("AwsRouteTable unit tests", () => {
 
     await expect(
       routeTableManager.addRouteToIGW(routeTableTagName, diffNetworkIgwTagName, routeCirdBlock)
-    ).rejects.toThrow();
+    ).rejects.toThrow("belong to different networks");
   });
 });
 
