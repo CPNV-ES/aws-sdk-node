@@ -18,9 +18,9 @@ const routeTableManager = new AwsRouteTableManager(
 const vpcTagName = "integration-vpc";
 const vpcCidrBlock = "10.0.0.0/16";
 const privateSubnetTagName = "integration-private_subnet";
-const privateSubnetCidrBlock = "10.0.0.0/24";
+const privateSubnetCidrBlock = "10.0.1.0/24";
 const publicSubnetTagName = "integration-public_subnet";
-const publicSubnetCidrBlock = "10.0.1.0/24";
+const publicSubnetCidrBlock = "10.0.0.0/24";
 const internetGatewayTagName = "integration-internet_gateway";
 const customRouteTableTagName = "integartion-custom_route_table";
 
