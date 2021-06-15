@@ -33,8 +33,6 @@ export class AwsInternetGateway implements IInternetGateway {
             InternetGatewayId = await this.igwId(igwTagName);
             await this.client.deleteInternetGateway({ InternetGatewayId: InternetGatewayId }).promise();
         } catch (e) {
-            console.error(e);
-
             return;
         }
     }
@@ -58,8 +56,6 @@ export class AwsInternetGateway implements IInternetGateway {
             InternetGatewayId = await this.igwId(igwTagName);
             vpcId = await aws.vpcId(vpcTagName);
         } catch (e) {
-            console.error(e);
-
             return;
         }
 
@@ -83,7 +79,6 @@ export class AwsInternetGateway implements IInternetGateway {
             InternetGatewayId = await this.igwId(igwTagName);
             vpcId = await aws.vpcId(vpcTagName);
         } catch (e) {
-            console.error(e);
             return;
         }
 
