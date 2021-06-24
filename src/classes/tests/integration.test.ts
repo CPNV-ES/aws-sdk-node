@@ -2,18 +2,14 @@ import { AwsVpcManager } from "../AwsVpcManager";
 import { AwsInternetGateway } from "../AwsInternetGateway";
 import { AwsRouteTableManager } from "../AwsRouteTableManager";
 import { AwsSubnetManager } from "../AwsSubnetManager";
-import { config } from "../../config";
+import EC2Client from "aws-sdk/clients/ec2";
 
-const vpcManager = new AwsVpcManager(config.AWS_REGION);
-const internetGatewayManager = new AwsInternetGateway(config.AWS_REGION);
-const subnetManager = new AwsSubnetManager(config.AWS_REGION, vpcManager);
-const routeTableManager = new AwsRouteTableManager(
-  "",
-  config.AWS_REGION,
-  vpcManager,
-  subnetManager,
-  internetGatewayManager
-);
+const client = new EC2Client({ region: process.env.AWS_REGION });
+
+const vpcManager = new AwsVpcManager(client);
+const internetGatewayManager = new AwsInternetGateway(client);
+const subnetManager = new AwsSubnetManager(client, vpcManager);
+const routeTableManager = new AwsRouteTableManager(client, vpcManager, subnetManager, internetGatewayManager);
 
 const vpcTagName = "integration-vpc";
 const vpcCidrBlock = "10.0.0.0/16";
@@ -31,10 +27,10 @@ const cleanup = async () => {
   await routeTableManager.deleteRouteTable(customRouteTableTagName);
 
   // Detach internet gateway from the VPC
-  await internetGatewayManager.detachInternetGateway(
-    internetGatewayTagName,
-    vpcTagName
-  );
+  if(await internetGatewayManager.existInternetGateway(internetGatewayTagName) && await vpcManager.exists(vpcTagName)) {
+      await internetGatewayManager.detachInternetGateway(internetGatewayTagName, vpcTagName);
+  }
+
   // Delete internet gateway
   await internetGatewayManager.deleteInternetGateway(internetGatewayTagName);
 
@@ -58,113 +54,67 @@ afterAll(async () => {
   await cleanup();
 });
 
+
 describe("Aws infrastructure integration test", () => {
-  test("Create infrastructure integration test", async () => {
-    // Create VPC
-    await vpcManager.createVpc(vpcTagName, vpcCidrBlock);
-    expect(await vpcManager.exists(vpcTagName)).toBeTruthy();
+    test("Create infrastructure integration test", async () => {
+        // Create VPC 
+        await vpcManager.createVpc(vpcTagName, vpcCidrBlock);
+        expect(await vpcManager.exists(vpcTagName)).toBeTruthy();
 
-    // Create public subnet
-    await subnetManager.createSubnet(
-      publicSubnetTagName,
-      vpcTagName,
-      publicSubnetCidrBlock
-    );
-    expect(await subnetManager.exists(publicSubnetTagName)).toBeTruthy();
+        // Create public subnet
+        await subnetManager.createSubnet(publicSubnetTagName, vpcTagName, publicSubnetCidrBlock);
+        expect(await subnetManager.exists(publicSubnetTagName)).toBeTruthy();
 
-    // Create private subnet
-    await subnetManager.createSubnet(
-      privateSubnetTagName,
-      vpcTagName,
-      privateSubnetCidrBlock
-    );
-    expect(await subnetManager.exists(privateSubnetTagName)).toBeTruthy();
+        // Create private subnet
+        await subnetManager.createSubnet(privateSubnetTagName, vpcTagName, privateSubnetCidrBlock);
+        expect(await subnetManager.exists(privateSubnetTagName)).toBeTruthy();
 
-    // Create internet gateway
-    await internetGatewayManager.createInternetGateway(internetGatewayTagName);
-    expect(
-      await internetGatewayManager.existInternetGateway(internetGatewayTagName)
-    ).toBeTruthy();
+        // Create internet gateway
+        await internetGatewayManager.createInternetGateway(internetGatewayTagName);
+        expect(await internetGatewayManager.existInternetGateway(internetGatewayTagName)).toBeTruthy();
+        // Attach to internet gateway to the VPC
+        await internetGatewayManager.attachInternetGateway(internetGatewayTagName, vpcTagName);
+        expect(await internetGatewayManager.isInternetGatewayAttached(internetGatewayTagName, vpcTagName)).toBeTruthy();
+        
+        // Create custom route table
+        await routeTableManager.createRouteTable(customRouteTableTagName, vpcTagName);
+        expect(await routeTableManager.exists(customRouteTableTagName)).toBeTruthy();
+        // Attach to public subnet
+        await routeTableManager.associateWithSubnet(customRouteTableTagName, publicSubnetTagName);
+        expect(await routeTableManager.isAssociatedWithSubnet(customRouteTableTagName, publicSubnetTagName)).toBeTruthy();
+        // Add route to igw
+        await routeTableManager.addRouteToIGW(customRouteTableTagName, internetGatewayTagName, "0.0.0.0/0");
+        expect(await routeTableManager.hasRoute(customRouteTableTagName, "0.0.0.0/0"));
 
-    // Attach to internet gateway to the VPC
-    expect(
-      await internetGatewayManager.attachInternetGateway(
-        internetGatewayTagName,
-        vpcTagName
-      )
-    ).toBeTruthy();
+        // TODO: Get Main route table 
+        // need to be able to get a VPC's main RouteTable, and it also needs to have a TagName
+        // TODO: Add route to nat instance
 
-    // Create custom route table
-    await routeTableManager.createRouteTable(
-      customRouteTableTagName,
-      vpcTagName
-    );
-    expect(
-      await routeTableManager.exists(customRouteTableTagName)
-    ).toBeTruthy();
+        // Dissociate custom route table from public subnet
+        await routeTableManager.dissociateFromAllSubnets(customRouteTableTagName);
+        expect(await routeTableManager.isAssociatedWithSubnet(customRouteTableTagName, publicSubnetTagName)).toBeFalsy();
+        // Delete custom route table
+        await routeTableManager.deleteRouteTable(customRouteTableTagName);
+        expect(await routeTableManager.exists(customRouteTableTagName)).toBeFalsy();
 
-    // Attach to public subnet
-    await routeTableManager.associateWithSubnet(
-      customRouteTableTagName,
-      publicSubnetTagName
-    );
+        // Detach internet gateway from the VPC
+        await internetGatewayManager.detachInternetGateway(internetGatewayTagName, vpcTagName);
+        expect(await internetGatewayManager.isInternetGatewayAttached(internetGatewayTagName, vpcTagName)).toBeFalsy();
 
-    expect(
-      await routeTableManager.isAssociatedWithSubnet(
-        customRouteTableTagName,
-        publicSubnetTagName
-      )
-    ).toBeTruthy();
+        // Delete internet gateway
+        await internetGatewayManager.deleteInternetGateway(internetGatewayTagName);
+        expect(await internetGatewayManager.existInternetGateway(internetGatewayTagName)).toBeFalsy();
 
-    // Add route to igw
-    await routeTableManager.addRouteToIGW(
-      customRouteTableTagName,
-      internetGatewayTagName,
-      "0.0.0.0/0"
-    );
-    expect(
-      await routeTableManager.hasRoute(customRouteTableTagName, "0.0.0.0/0")
-    );
+        // Delete private subnet
+        await subnetManager.deleteSubnet(privateSubnetTagName);
+        expect(await subnetManager.exists(privateSubnetTagName)).toBeFalsy();
 
-    // TODO: Get Main route table
-    // need to be able to get a VPC's main RouteTable, and it also needs to have a TagName
-    // TODO: Add route to nat instance
+        // Delete public subnet
+        await subnetManager.deleteSubnet(publicSubnetTagName);
+        expect(await subnetManager.exists(publicSubnetTagName)).toBeFalsy();
 
-    // Dissociate custom route table from public subnet
-    await routeTableManager.dissociateFromAllSubnets(customRouteTableTagName);
-    expect(
-      await routeTableManager.isAssociatedWithSubnet(
-        customRouteTableTagName,
-        publicSubnetTagName
-      )
-    ).toBeFalsy();
-    // Delete custom route table
-    await routeTableManager.deleteRouteTable(customRouteTableTagName);
-    expect(await routeTableManager.exists(customRouteTableTagName)).toBeFalsy();
-
-    // Detach internet gateway from the VPC
-    expect(
-      await internetGatewayManager.detachInternetGateway(
-        internetGatewayTagName,
-        vpcTagName
-      )
-    ).toBeTruthy();
-    // Delete internet gateway
-    await internetGatewayManager.deleteInternetGateway(internetGatewayTagName);
-    expect(
-      await internetGatewayManager.existInternetGateway(internetGatewayTagName)
-    ).toBeFalsy();
-
-    // Delete private subnet
-    await subnetManager.deleteSubnet(privateSubnetTagName);
-    expect(await subnetManager.exists(privateSubnetTagName)).toBeFalsy();
-
-    // Delete public subnet
-    await subnetManager.deleteSubnet(publicSubnetTagName);
-    expect(await subnetManager.exists(publicSubnetTagName)).toBeFalsy();
-
-    // Delete VPC
-    await vpcManager.deleteVpc(vpcTagName);
-    expect(await vpcManager.exists(vpcTagName)).toBeFalsy();
-  });
+        // Delete VPC
+        await vpcManager.deleteVpc(vpcTagName);
+        expect(await vpcManager.exists(vpcTagName)).toBeFalsy();
+    })
 });

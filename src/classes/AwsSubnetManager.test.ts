@@ -1,13 +1,14 @@
 import { AwsSubnetManager } from "./AwsSubnetManager";
 import { AwsVpcManager } from "./AwsVpcManager";
+import EC2Client from "aws-sdk/clients/ec2";
 
-const regionEndpint = process.env.AWS_REGION ?? "";
+const client = new EC2Client({ region: process.env.AWS_REGION });
 const vpcTagname = process.env.VPC_TAG_NAME ?? "";
 const subnetTagname = process.env.SUBNET_TAG_NAME ?? "";
 const cidrBlock = process.env.SUBNET_CIDR_BLOCK ?? "";
 
-const vpcManager = new AwsVpcManager(regionEndpint);
-const subnetManager = new AwsSubnetManager(regionEndpint, vpcManager);
+const vpcManager = new AwsVpcManager(client);
+const subnetManager = new AwsSubnetManager(client, vpcManager);
 
 beforeAll(async () => {
   if (!(await vpcManager.exists(vpcTagname))) {

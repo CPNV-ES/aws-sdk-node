@@ -1,7 +1,8 @@
 import { AwsInternetGateway } from "./AwsInternetGateway";
 import { AwsVpcManager } from "./AwsVpcManager";
-import { config } from "../config";
-const regionEndpint = config.AWS_REGION;
+import EC2Client from "aws-sdk/clients/ec2";
+
+const client = new EC2Client({ region: process.env.AWS_REGION });
 const igwTagName = "IGW_test";
 const vpcTagName = "VPC_test";
 const cidrBlock = "10.0.0.0/16";
@@ -10,8 +11,8 @@ let internetGateway: AwsInternetGateway;
 let vpcManager: AwsVpcManager;
 
 beforeEach(() => {
-    internetGateway = new AwsInternetGateway(regionEndpint);
-    vpcManager = new AwsVpcManager(regionEndpint);
+    internetGateway = new AwsInternetGateway(client);
+    vpcManager = new AwsVpcManager(client);
 
     jest.setTimeout(60000);
 });
@@ -53,8 +54,10 @@ describe("InternetGateWay integration tests", () => {
         await internetGateway.createInternetGateway(igwTagName);
         await vpcManager.createVpc(vpcTagName, cidrBlock);
 
-        expect(await internetGateway.attachInternetGateway(igwTagName, vpcTagName)).toBeTruthy();
-        expect(await internetGateway.detachInternetGateway(igwTagName, vpcTagName)).toBeTruthy();
-
+        await internetGateway.attachInternetGateway(igwTagName, vpcTagName);
+        expect(await internetGateway.isInternetGatewayAttached(igwTagName, vpcTagName)).toBeTruthy();
+        
+        await internetGateway.detachInternetGateway(igwTagName, vpcTagName);
+        expect(await internetGateway.isInternetGatewayAttached(igwTagName, vpcTagName)).toBeFalsy();
     });
 });
